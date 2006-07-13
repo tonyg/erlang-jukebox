@@ -1,0 +1,11 @@
+<html>
+  <body>
+<erl>
+
+out(Arg) ->
+    {ok, Value} = testapp:ping(),
+    {ehtml, {p,[],integer_to_list(Value)}}.
+
+</erl>
+  </body>
+</html>

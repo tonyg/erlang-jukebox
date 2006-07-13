@@ -1,0 +1,8 @@
+{name, "ibrowse"}.
+{vsn, {1,0}}.
+{summary, "Powerful HTTP client"}.
+{author, "Chandrashekhar Mullaparthi", "chandrashekhar.mullaparthi@t-mobile.co.uk", "050505"}.
+{keywords, ["HTTP client"]}.
+{needs, []}.
+{abstract,"A powerful HTTP client written in erlang. Supports HTTP/0.9, HTTP/1.0 and HTTP/1.1"}.
+
