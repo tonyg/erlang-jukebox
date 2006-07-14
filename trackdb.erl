@@ -27,31 +27,41 @@ search_tracks(Keys) -> gen_server:call(trackdb, {search_tracks, Keys}).
 
 % Server-side
 
+-record(v1, {roots}).
+
+upgrade_state(State=#v1{}) ->
+    State;
+upgrade_state(State) -> %% unlabeled version.
+    dict:fetch_keys(State), %% ensure it's a dictionary
+    upgrade_state(#v1{roots=State}).
+
 init(_Args) ->
     case file:read_file("ejukebox.db") of
-	{ok, Data} -> {ok, binary_to_term(Data)};
+	{ok, State} -> {ok, upgrade_state(binary_to_term(State))};
 	{error, enoent} -> {ok, dict:new()}
     end.
 
-handle_call(snapshot, _From, Roots) ->
-    {reply, file:write_file("ejukebox.db", term_to_binary(Roots)), Roots};
+handle_call(snapshot, _From, State) ->
+    {reply, file:write_file("ejukebox.db", term_to_binary(State)), State};
 
-handle_call(all_roots, _From, Roots) ->
-    {reply, dict:fetch_keys(Roots), Roots};
+handle_call(all_roots, _From, State) ->
+    {reply, dict:fetch_keys(State#v1.roots), State};
 
-handle_call({remove_root, Url}, _From, Roots) ->
-    {reply, ok, dict:erase(Url, Roots)};
+handle_call({remove_root, Url}, _From, State) ->
+    {reply, ok, State#v1{roots = dict:erase(Url, State#v1.roots)}};
 
-handle_call({rescan_root, Url}, _From, Roots) ->
-    {reply, spawn(fun () -> rescanner(Url) end), Roots};
+handle_call({rescan_root, Url}, _From, State) ->
+    {reply, spawn(fun () -> rescanner(Url) end), State};
 
-handle_call({update_root, Url, TrackUrls}, _From, Roots) ->
-    {reply, ok, dict:store(Url, TrackUrls, Roots)};
+handle_call({update_root, Url, TrackUrls}, _From, State) ->
+    {reply, ok, State#v1{roots = dict:store(Url, TrackUrls, State#v1.roots)}};
 
-handle_call({search_tracks, Keys}, From, Roots) ->
-    spawn(fun () -> searcher(From, Keys, Roots) end),
-    {noreply, Roots}.
+handle_call({search_tracks, Keys}, From, State) ->
+    spawn(fun () -> searcher(From, Keys, State#v1.roots) end),
+    {noreply, State};
 
+handle_call({internal, extract_state}, _From, State) ->
+    {reply, State, State}.
 
 matches_all(Keys, Candidate) ->
     lists:all(fun (Key) ->
