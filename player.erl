@@ -3,7 +3,7 @@
 
 -export([start/1]).
 -export([supports_extension/1]).
--export([enqueue/1, get_queue/0, skip/0, clear_queue/0]).
+-export([enqueue/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
 -export([init/1, handle_call/3, handle_info/2]).
 
 -export([join/2]).
@@ -31,6 +31,7 @@ player_mapping1(_) -> not_playable.
 enqueue(Urls) -> gen_server:call(player, {enqueue, Urls}).
 get_queue() -> gen_server:call(player, get_queue).
 skip() -> gen_server:call(player, skip).
+pause(On) -> gen_server:call(player, {pause, On}).
 clear_queue() -> gen_server:call(player, clear_queue).
 
 %---------------------------------------------------------------------------
@@ -52,7 +53,7 @@ summarise_state(State) ->
     Q = State#state.queue,
     case State#state.status of
 	idle -> {idle, Q};
-	{playing, Entry, _PlayerDetails} -> {{playing, Entry}, Q}
+	{Other, Entry, _PlayerDetails} -> {{Other, Entry}, Q}
     end.
 
 act_and_reply(State) ->
@@ -67,13 +68,23 @@ handle_call(skip, _From, State) ->
     case State#state.status of
 	idle ->
 	    ok;
-	{playing, _Entry, {UnixPid, Port}} ->
-	    os:cmd("kill " ++ integer_to_list(UnixPid)),
+	{_Other, _Entry, {UnixPid, Port}} ->
+	    os:cmd("kill -KILL " ++ integer_to_list(UnixPid)),
 	    receive
 		{Port, {exit_status, _Code}} -> ok
 	    end
     end,
     act_and_reply(State#state{status = idle});
+handle_call({pause, On}, _From, State) ->
+    case State#state.status of
+	idle -> act_and_reply(State);
+	{_Other, Entry, {UnixPid, Port}} ->
+	    NewState = case On of
+			   true -> os:cmd("kill -TSTP " ++ integer_to_list(UnixPid)), paused;
+			   false -> os:cmd("kill -CONT " ++ integer_to_list(UnixPid)), playing
+		       end,
+	    act_and_reply(State#state{status = {NewState, Entry, {UnixPid, Port}}})
+    end;
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = []}).
 
