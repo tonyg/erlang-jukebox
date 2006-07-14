@@ -3,4 +3,5 @@
 
 start(Sconf) ->
     spider:start(Sconf),
-    trackdb:start(Sconf).
+    trackdb:start(Sconf),
+    player:start(Sconf).
