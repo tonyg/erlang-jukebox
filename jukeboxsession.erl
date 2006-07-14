@@ -26,4 +26,7 @@ handler(_, {call, whoami, _}, Session) ->
     {false, {response, r_user_id(Session)}};
 handler(_, {call, logout, _}, Session) ->
     NewSession = Session#session{username = default_name()},
-    {true, 0, NewSession, {response, r_user_id(NewSession)}}.
+    {true, 0, NewSession, {response, r_user_id(NewSession)}};
+handler(_, {call, search, [{array, Keys}]}, Session) ->
+    io:format("Search by keys ~p ~n -> ~p~n", [Keys, trackdb:search_tracks(Keys)]),
+    {false, {response, "ok"}}.

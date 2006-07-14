@@ -4,6 +4,7 @@ var jb = new jsonrpc.ServiceProxy("jukebox.yaws", [
 				      "login",
 				      "whoami",
 				      "logout",
+				      "search",
 				  ]);
 
 function update_username(jbResp) {
@@ -16,6 +17,11 @@ function change_username() {
 
 function do_logout() {
     update_username(jb.logout('dummy'));
+}
+
+function do_search() {
+    var keys = document.getElementById("searchtext").value.split(/ +/);
+    jb.search(keys);
 }
 
 function initClient() {

@@ -7,9 +7,13 @@
   <body>
     <h1>Erlang Jukebox</h1>
     <div id="controls">
-      Username: <input id="username" value="?">
+      Username: <input id="username" value="?" />
       <button onclick="change_username()">Set</button>
       <button onclick="do_logout()">Logout</button>
+    </div>
+    <div id="searchpanel">
+      <input id="searchtext" value="" />
+      <button onclick="do_search()">Search</button>
     </div>
     <script>initClient();</script>
   </body>
