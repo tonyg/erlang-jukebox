@@ -88,9 +88,9 @@ handle_call({pause, On}, _From, State) ->
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 
-handle_info({Port, {exit_status, Code}}, State) when is_port(Port) ->
+handle_info({Port, {exit_status, _Code}}, State) when is_port(Port) ->
     {noreply, act_on(State#state{status = idle})};
-handle_info(Msg, State) ->
+handle_info(_Msg, State) ->
     {noreply, State}.
 
 join([], _) -> "";
