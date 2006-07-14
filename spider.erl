@@ -1,27 +1,39 @@
 -module(spider).
 
 -export([start/1]).
--export([spider/1]).
+-export([spider/1, spider/2]).
 
 start(Sconf) ->
     io:format("Starting spider.~n"),
     ibrowse:start().
 
-spider(Url) ->
-    spider([Url], []).
+spider(Url) -> spider(Url, false).
 
-spider([], Results) ->
+spider(Url, WantDebug) ->
+    spider([Url], [], WantDebug).
+
+debug_out(true, Fmt, Args) ->
+    io:format(Fmt, Args);
+debug_out(false, _, _) ->
+    ok.
+
+spider([], Results, _WantDebug) ->
     Results;
-spider([Url | Work], Results) ->
+spider([Url | Work], Results, WantDebug) ->
     {ok, RE} = regexp:parse("[hH][rR][eE][fF]=\"([^\"]*)\""),
-    case ibrowse:send_req(Url, [], get) of
+    debug_out(WantDebug, "Spidering ~p~n", [Url]),
+    case ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 0}}]) of
 	{ok, "3" ++ _CodeRest, Headers, _Body} ->
 	    case lists:keysearch("Location", 1, Headers) of
 		{value, {_, Replacement}} ->
-		    spider([Replacement | Work], Results);
-		_ -> spider(Work, Results)
+		    debug_out(WantDebug, "Redirecting to ~p~n", [Replacement]),
+		    spider([Replacement | Work], Results, WantDebug);
+		_ ->
+		    debug_out(WantDebug, "Redirection without replacement! Ignoring~n", []),
+		    spider(Work, Results, WantDebug)
 	    end;
 	{ok, "2" ++ _CodeRest, _Headers, Body} ->
+	    %%debug_out(WantDebug, "Body length ~p~n", [length(Body)]),
 	    {match, Matches} = regexp:matches(Body, RE),
 	    {NewWork, NewResults} =
 		lists:foldl(fun ({Start, Length}, State) ->
@@ -29,8 +41,10 @@ spider([Url | Work], Results) ->
 						       string:substr(Body, Start + 6, Length - 7),
 						       State)
 			    end, {Work, Results}, Matches),
-	    spider(NewWork, NewResults);
-	_ -> spider(Work, Results)
+	    spider(NewWork, NewResults, WantDebug);
+	Response ->
+	    debug_out(WantDebug, "Odd response ~p~n", [Response]),
+	    spider(Work, Results, WantDebug)
     end.
 
 html_decode(S0) ->
