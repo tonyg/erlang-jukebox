@@ -5,6 +5,7 @@ all: $(TARGETS)
 	make -C ibrowse-1.0/src
 
 run: all
+	chmod a+x wrapper.sh
 	/opt/yaws/bin/yaws --conf yaws.conf -i
 
 clean: cleanlog
