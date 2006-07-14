@@ -39,18 +39,18 @@ clear_queue() -> gen_server:call(player, clear_queue).
 -record(state, {status, queue}).
 
 init(_Args) ->
-    {ok, #state{status = idle, queue = []}}.
+    {ok, #state{status = idle, queue = queue:new()}}.
 
-queue_entry(Url) ->
-    {{node(), now()}, Url}.
-
-act_on(#state{status = idle, queue = [Entry | Queue]}) ->
-    {_QID, Url} = Entry,
-    #state{status = {playing, Entry, play(Url)}, queue = Queue};
+act_on(State=#state{status = idle, queue = TQ}) ->
+    case queue:out(TQ) of
+	{empty, _} -> State;
+	{{value, Entry={_QID,Url}}, TQ1} ->
+	    State#state{status = {playing, Entry, play(Url)}, queue = TQ1}
+    end;
 act_on(State) -> State.
 
 summarise_state(State) ->
-    Q = State#state.queue,
+    Q = queue:to_list(State#state.queue),
     case State#state.status of
 	idle -> {idle, Q};
 	{Other, Entry, _PlayerDetails} -> {{Other, Entry}, Q}
@@ -61,7 +61,7 @@ act_and_reply(State) ->
     {reply, summarise_state(State1), State1}.
 
 handle_call({enqueue, Urls}, _From, State) ->
-    act_and_reply(State#state{queue=(State#state.queue ++ lists:map(fun queue_entry/1, Urls))});
+    act_and_reply(State#state{queue=queue:join(State#state.queue, tqueue:from_list(Urls))});
 handle_call(get_queue, _From, State) ->
     act_and_reply(State);
 handle_call(skip, _From, State) ->
@@ -86,7 +86,7 @@ handle_call({pause, On}, _From, State) ->
 	    act_and_reply(State#state{status = {NewState, Entry, {UnixPid, Port}}})
     end;
 handle_call(clear_queue, _From, State) ->
-    act_and_reply(State#state{queue = []}).
+    act_and_reply(State#state{queue = queue:new()}).
 
 handle_info({Port, {exit_status, Code}}, State) when is_port(Port) ->
     {noreply, act_on(State#state{status = idle})};
