@@ -97,11 +97,21 @@ join([], _) -> "";
 join([X], _) -> X;
 join([X | XS], Sep) -> X ++ Sep ++ join(XS, Sep).
 
+shell_escape(S) ->
+    lists:reverse("'" ++ shell_escape("'", S)).
+shell_escape(Acc, []) ->
+    Acc;
+shell_escape(Acc, "'" ++ S) ->
+    shell_escape("'\"'\"'" ++ Acc, S);
+shell_escape(Acc, [C | S]) ->
+    shell_escape([C | Acc], S).
+
 play(Url) ->
     Extension = filename:extension(Url),
     {ok, Template} = player_mapping(Extension),
+    Escaped = shell_escape(Url),
     CommandLine = lists:map(fun (url) ->
-				    Url;
+				    Escaped;
 				(Part) -> Part
 			    end, Template),
     Cmd = join(["./wrapper.sh" | CommandLine], " "),
