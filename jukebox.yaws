@@ -1,0 +1,6 @@
+<erl>
+out(A) ->
+    {ok, {IP, _Port}} = inet:peername(A#arg.clisock),
+    A2 = A#arg{state = jukeboxsession:initial_state(IP)},
+    yaws_rpc:handler_session(A2, {jukeboxsession, handler}).
+</erl>
