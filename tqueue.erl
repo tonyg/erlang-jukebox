@@ -30,6 +30,7 @@ entry_from_json(J) ->
 to_json(Q) ->
     {array, lists:map(fun entry_to_json/1, queue:to_list(Q))}.
 
+from_json({}) -> from_json({array, []}); %% correct for json.erl flaw
 from_json({array, Entries}) ->
     queue:from_list(lists:map(fun entry_from_json/1, Entries)).
 
