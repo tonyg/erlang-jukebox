@@ -7,6 +7,7 @@ all: $(TARGETS)
 dojo: dojo.zip
 	rm -rf dojo
 	unzip dojo.zip
+	touch dojo
 
 run: all dojo
 	chmod a+x wrapper.sh
