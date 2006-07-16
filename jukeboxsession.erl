@@ -3,11 +3,11 @@
 
 -record(session, {username, ip}).
 
-default_name() ->
-    "Anonymous Coward".
+default_name(Session) ->
+    lists:flatten(io_lib:format("Anonymous Coward", [])).
 
 initial_state(IP) ->
-    #session{username = default_name(),
+    #session{username = default_name(#session{ip = IP}),
 	     ip = IP}.
 
 user_id(Session) ->
@@ -25,7 +25,7 @@ handler(_, {call, login, [NewName]}, Session) ->
 handler(_, {call, whoami, _}, Session) ->
     {false, {response, r_user_id(Session)}};
 handler(_, {call, logout, _}, Session) ->
-    NewSession = Session#session{username = default_name()},
+    NewSession = Session#session{username = default_name(Session)},
     {true, 0, NewSession, {response, r_user_id(NewSession)}};
 handler(_, {call, search, [{array, Keys}]}, Session) ->
     io:format("Search by keys ~p ~n -> ~p~n", [Keys, trackdb:search_tracks(Keys)]),
