@@ -1,6 +1,15 @@
 <erl>
+update_prop(K, Fun, []) ->
+    [];
+update_prop(K, Fun, [E | L]) when is_tuple(E), element(1, E) == K ->
+    [Fun(E) | L];
+update_prop(K, Fun, [E | L]) ->
+    [E | update_prop(K, Fun, L)].
+
 out(A) ->
     {ok, {IP, _Port}} = inet:peername(A#arg.clisock),
     A2 = A#arg{state = jukeboxsession:initial_state(IP)},
-    yaws_rpc:handler_session(A2, {jukeboxsession, handler}).
+    %% Workaround to set the MIME type of the response.
+    update_prop(content, fun ({Key, MimeType, Body}) -> {Key, "text/json", Body} end,
+		yaws_rpc:handler_session(A2, {jukeboxsession, handler})).
 </erl>
