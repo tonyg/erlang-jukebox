@@ -1,0 +1,1 @@
+-record(entry, {id, url, username}).

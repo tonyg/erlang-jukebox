@@ -107,6 +107,9 @@ function display_search_results(results, divnode) {
 	    partsnode.appendChild(document.createTextNode(" "));
 	    partsnode.appendChild(partnode);
 	}
+	if (track.username) {
+	    itemnode.appendChild(document.createTextNode(" (" + track.username + ")"));
+	}
 
 	listnode.appendChild(itemnode);
     }

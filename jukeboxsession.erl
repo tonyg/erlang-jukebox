@@ -1,9 +1,10 @@
 -module(jukeboxsession).
+-include("tqueue.hrl").
 -export([initial_state/1, handler/3]).
 
 -record(session, {username, ip}).
 
-default_name(Session) ->
+default_name(_Session) ->
     lists:flatten(io_lib:format("Anonymous Coward", [])).
 
 initial_state(IP) ->
@@ -40,13 +41,13 @@ handler(_, {call, whoami, _}, Session) ->
 handler(_, {call, logout, _}, Session) ->
     NewSession = Session#session{username = default_name(Session)},
     {true, 0, NewSession, {response, r_user_id(NewSession)}};
-handler(_, {call, search, [{array, Keys}]}, _) ->
+handler(_, {call, search, [{array, Keys}]}, _Session) ->
     Tracks = trackdb:search_tracks(Keys),
     {false, {response, tqueue:to_json(Tracks)}};
 handler(_, {call, enqueue, [EntryList]}, Session) ->
     Q = tqueue:from_json(EntryList),
-    player:enqueue(Q),
-    lists:foreach(fun ({_,Url}) -> log(Session, "enqueued " ++ Url) end, queue:to_list(Q)),
+    player:enqueue(Session#session.username, Q),
+    lists:foreach(fun (#entry{url=Url}) -> log(Session, "enqueued " ++ Url) end, queue:to_list(Q)),
     {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, get_queue, _}, _) ->
     {false, {response, summary_to_json(player:get_queue())}};

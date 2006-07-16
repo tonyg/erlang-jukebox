@@ -1,9 +1,10 @@
 -module(player).
+-include("tqueue.hrl").
 -behaviour(gen_server).
 
 -export([start/1]).
 -export([supports_extension/1]).
--export([enqueue/1, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
+-export([enqueue/2, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
 -export([init/1, handle_call/3, handle_info/2]).
 
 -export([join/2]).
@@ -28,7 +29,7 @@ player_mapping1(".ogg") -> {ok, ["/usr/bin/env", "ogg123", "-q", url]};
 player_mapping1(".mp3") -> {ok, ["/usr/bin/env", "mpg123", "-q", url]};
 player_mapping1(_) -> not_playable.
 
-enqueue(QUrls) -> gen_server:call(player, {enqueue, QUrls}).
+enqueue(Username, QUrls) -> gen_server:call(player, {enqueue, tqueue:chown(Username, QUrls)}).
 dequeue(QEntry) -> gen_server:call(player, {dequeue, QEntry}).
 raise(QEntry) -> gen_server:call(player, {raise, QEntry}).
 lower(QEntry) -> gen_server:call(player, {lower, QEntry}).
@@ -47,7 +48,7 @@ init(_Args) ->
 act_on(State=#state{status = idle, queue = TQ}) ->
     case queue:out(TQ) of
 	{empty, _} -> State;
-	{{value, Entry={_QID,Url}}, TQ1} ->
+	{{value, Entry=#entry{url = Url}}, TQ1} ->
 	    State#state{status = {playing, Entry, play(Url)}, queue = TQ1}
     end;
 act_on(State) -> State.
@@ -63,8 +64,8 @@ act_and_reply(State) ->
     State1 = act_on(State),
     {reply, summarise_state(State1), State1}.
 
-handle_call({enqueue, QUrls}, _From, State) ->
-    act_and_reply(State#state{queue=queue:join(State#state.queue, QUrls)});
+handle_call({enqueue, Q}, _From, State) ->
+    act_and_reply(State#state{queue=queue:join(State#state.queue, Q)});
 handle_call({dequeue, QEntry}, _From, State) ->
     act_and_reply(State#state{queue=tqueue:dequeue(QEntry, State#state.queue)});
 handle_call({raise, QEntry}, _From, State) ->

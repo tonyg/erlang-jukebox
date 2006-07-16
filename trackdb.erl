@@ -53,8 +53,8 @@ handle_call({remove_root, Url}, _From, State) ->
 handle_call({rescan_root, Url}, _From, State) ->
     {reply, spawn(fun () -> rescanner(Url) end), State};
 
-handle_call({update_root, Url, TrackUrls}, _From, State) ->
-    {reply, ok, State#v1{roots = dict:store(Url, TrackUrls, State#v1.roots)}};
+handle_call({update_root, Url, Q}, _From, State) ->
+    {reply, ok, State#v1{roots = dict:store(Url, Q, State#v1.roots)}};
 
 handle_call({search_tracks, Keys}, From, State) ->
     spawn(fun () -> searcher(From, Keys, State#v1.roots) end),
@@ -63,27 +63,9 @@ handle_call({search_tracks, Keys}, From, State) ->
 handle_call({internal, extract_state}, _From, State) ->
     {reply, State, State}.
 
-matches_all(Keys, Candidate) ->
-    lists:all(fun (Key) ->
-		      case string:str(Candidate, Key) of
-			  0 -> false;
-			  _ -> true
-		      end
-	      end, Keys).
-
-searcher(From, Keys0, Roots) ->
-    Keys = lists:map(fun http_util:to_lower/1, Keys0),
-    Matches = dict:fold(fun (_Url, TrackUrls, Sofar0) ->
-				lists:foldl(fun (TrackUrl, Sofar1) ->
-						    case matches_all(Keys,
-								     http_util:to_lower(TrackUrl))
-							of
-							true -> [TrackUrl | Sofar1];
-							false -> Sofar1
-						    end
-					    end, Sofar0, TrackUrls)
-			end, [], Roots),
-    gen_server:reply(From, tqueue:from_list(lists:sort(Matches))).
+searcher(From, Keys, Roots) ->
+    Matches = dict:fold(fun (_Url, Q, Acc) -> tqueue:search(Keys, Q, Acc) end, [], Roots),
+    gen_server:reply(From, tqueue:finish_search(Matches)).
 
 rescanner(Url) ->
-    update_root(Url, spider:spider(Url)).
+    update_root(Url, tqueue:from_list(spider:spider(Url), null)).
