@@ -1,20 +1,56 @@
 <html>
   <head>
     <title>Erlang Jukebox</title>
+    <script>djConfig = { isDebug: false }</script>
+    <script type="text/javascript" src="dojo/dojo.js"></script>
+    <script type="text/javascript" src="client.js"></script>
+    <link rel="stylesheet" href="style.css" type="text/css"/>
   </head>
-  <script src="jsolait/jsolait.js"></script>
-  <script src="client.js"></script>
   <body>
     <h1>Erlang Jukebox</h1>
-    <div id="controls">
+    <div class="controls">
       Username: <input id="username" value="?" />
       <button onclick="change_username()">Set</button>
       <button onclick="do_logout()">Logout</button>
+      <button onclick="do_skip()">Skip</button>
+      <button onclick="do_pause(true)">Pause</button>
+      <button onclick="do_pause(false)">Unpause</button>
+      <button onclick="do_clear_queue()">Clear Queue</button>
     </div>
-    <div id="searchpanel">
-      <input id="searchtext" value="" />
-      <button onclick="do_search()">Search</button>
+    <div class="playerstatus">
+      <span id="statusatom">?</span>
+      <span id="nowplaying">?</span>
+      <div id="statuspanel"></div>
     </div>
-    <script>initClient();</script>
+    <div class="searchpanel">
+      <form onsubmit="alert('hi')">
+	<input id="searchtext" value="" />
+	<button onclick="do_search(); return false;">Search</button>
+      </form>
+    </div>
+
+    <div dojoType="LayoutContainer"
+	 layoutChildPriority='top-bottom'
+	 style="width: 100%; height: 100%;">
+      <div dojoType="ContentPane"
+	   layoutAlign="right">
+	<div class="historyPanel"
+	     style="width: 300px"
+	     id="history"
+	     layoutAlign="right"
+	     dojoType="ContentPane">
+	</div>
+      </div>
+      <div dojoType="ContentPane"
+	   layoutAlign="client">
+	<div id="mainTabContainer"
+	     dojo:closeButton="tab"
+	     dojoType="TabContainer"
+	     style="height: 70%">
+	</div>
+      </div>
+    </div>
+
+    <script>dojo.addOnLoad(initClient);</script>
   </body>
 </html>

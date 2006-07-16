@@ -1,0 +1,50 @@
+{
+    SMDVersion: ".1",
+    objectName: "jukebox",
+    serviceType: "JSON-RPC",
+    serviceURL: "jukebox.yaws",
+    methods: [
+	{
+	    name: "login",
+	    parameters: [{name:"newName",type:"STRING"}]
+	},
+	{
+	    name: "whoami",
+	    parameters: [{name:"dummy",type:"STRING"}]
+	},
+	{
+	    name: "logout",
+	    parameters: [{name:"dummy",type:"STRING"}]
+	},
+	{
+	    name: "search",
+	    parameters: [{name:"keys"}]
+	},
+
+	{
+	    name: "enqueue",
+	    parameters: [{name:"trackEntryList"}]
+	},
+	{
+	    name: "get_queue",
+	    parameters: [{name:"dummy",type:"STRING"}]
+	},
+	{
+	    name: "skip",
+	    parameters: [{name:"dummy",type:"STRING"}]
+	},
+	{
+	    name: "clear_queue",
+	    parameters: [{name:"dummy",type:"STRING"}]
+	},
+	{
+	    name: "pause",
+	    parameters: [{name:"shouldPause",type:"BOOLEAN"}]
+	},
+
+	{
+	    name: "get_history",
+	    parameters: [{name:"entryCount",type:"NUMBER"}]
+	},
+    ]
+}

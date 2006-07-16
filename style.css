@@ -1,0 +1,89 @@
+/* -*- javascript -*- */
+
+h1 {
+	text-align: center;
+	padding-bottom: 0.1em;
+	background: red;
+	border-bottom: 4px solid black;
+	margin: 0px;
+}
+
+a {
+	color: blue;
+}
+
+a:visited {
+	color: purple;
+}
+
+a:hover {
+	color: red ! important;
+}
+
+div.controls {
+	text-align: center;
+	background: #98FB98;
+	margin: 0px;
+}
+
+div.controls p {
+	margin: 0px;
+}
+
+hr {
+	display: none;
+}
+
+h2 {
+	border-bottom: 1px solid black;
+}
+
+div.search br {
+	display: none;
+}
+
+div.name-entry br {
+	display: none;
+}
+
+div.name-entry form {
+	margin-top: 1em;
+}
+
+div.history-page {
+	margin-top: 1em;
+}
+
+div.history ol {
+	list-style-type: none;
+}
+
+ol li {
+	font-size: small;
+}
+
+div.now-playing p {
+	font-size: small;
+}
+
+div.volume-control {
+	text-align: center;
+}
+
+span.parts span.p0 {
+	background: yellow;
+}
+
+span.parts span.p1 {
+	background: #ffeeee;
+}
+
+span.parts abbr a {
+	margin-left: 0.5em;
+	color: grey;
+	text-decoration: none;
+}
+
+span.parts abbr {
+	border: none;
+}
