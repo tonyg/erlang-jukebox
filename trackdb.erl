@@ -83,7 +83,7 @@ searcher(From, Keys0, Roots) ->
 						    end
 					    end, Sofar0, TrackUrls)
 			end, [], Roots),
-    gen_server:reply(From, Matches).
+    gen_server:reply(From, tqueue:from_list(lists:sort(Matches))).
 
 rescanner(Url) ->
     update_root(Url, spider:spider(Url)).

@@ -3,7 +3,7 @@
 
 -export([start/1]).
 -export([supports_extension/1]).
--export([enqueue/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
+-export([enqueue/1, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
 -export([init/1, handle_call/3, handle_info/2]).
 
 -export([join/2]).
@@ -28,7 +28,10 @@ player_mapping1(".ogg") -> {ok, ["/usr/bin/env", "ogg123", "-q", url]};
 player_mapping1(".mp3") -> {ok, ["/usr/bin/env", "mpg123", "-q", url]};
 player_mapping1(_) -> not_playable.
 
-enqueue(Urls) -> gen_server:call(player, {enqueue, Urls}).
+enqueue(QUrls) -> gen_server:call(player, {enqueue, QUrls}).
+dequeue(QEntry) -> gen_server:call(player, {dequeue, QEntry}).
+raise(QEntry) -> gen_server:call(player, {raise, QEntry}).
+lower(QEntry) -> gen_server:call(player, {lower, QEntry}).
 get_queue() -> gen_server:call(player, get_queue).
 skip() -> gen_server:call(player, skip).
 pause(On) -> gen_server:call(player, {pause, On}).
@@ -50,7 +53,7 @@ act_on(State=#state{status = idle, queue = TQ}) ->
 act_on(State) -> State.
 
 summarise_state(State) ->
-    Q = queue:to_list(State#state.queue),
+    Q = State#state.queue,
     case State#state.status of
 	idle -> {idle, Q};
 	{Other, Entry, _PlayerDetails} -> {{Other, Entry}, Q}
@@ -60,8 +63,14 @@ act_and_reply(State) ->
     State1 = act_on(State),
     {reply, summarise_state(State1), State1}.
 
-handle_call({enqueue, Urls}, _From, State) ->
-    act_and_reply(State#state{queue=queue:join(State#state.queue, tqueue:from_list(Urls))});
+handle_call({enqueue, QUrls}, _From, State) ->
+    act_and_reply(State#state{queue=queue:join(State#state.queue, QUrls)});
+handle_call({dequeue, QEntry}, _From, State) ->
+    act_and_reply(State#state{queue=tqueue:dequeue(QEntry, State#state.queue)});
+handle_call({raise, QEntry}, _From, State) ->
+    act_and_reply(State#state{queue=tqueue:raise(QEntry, State#state.queue)});
+handle_call({lower, QEntry}, _From, State) ->
+    act_and_reply(State#state{queue=tqueue:lower(QEntry, State#state.queue)});
 handle_call(get_queue, _From, State) ->
     act_and_reply(State);
 handle_call(skip, _From, State) ->
