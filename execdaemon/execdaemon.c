@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -136,8 +137,11 @@ void handle_execv(char *cmd, char *arg) {
 
   kid = fork();
   if (kid == 0) {
-    close(0);
-    close(1);
+    int nullfd = open("/dev/null", O_RDWR, 0777);
+    close(0); dup2(nullfd, 0);
+    close(1); dup2(nullfd, 1);
+    close(2); dup2(nullfd, 2);
+    close(nullfd);
     if (execv(program_name, arg_list) == -1) {
       exit(1);
     }
