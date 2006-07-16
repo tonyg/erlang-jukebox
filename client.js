@@ -32,8 +32,26 @@ function update_player_status(status) {
     var n = document.getElementById("nowplaying");
     var d = document.getElementById("statuspanel");
     s.innerHTML = ""; s.appendChild(document.createTextNode(status.status));
-    n.innerHTML = ""; n.appendChild(document.createTextNode(status.entry.url));
-    display_search_results(status.queue, d);
+
+    n.innerHTML = "";
+    n.appendChild(dojo.widget.createWidget("TrackWidget", {track: status.entry}).domNode);
+
+    var listnode = document.createElement("ol");
+    for (var i = 0; i < status.queue.length; i++) {
+	var track = status.queue[i];
+	var itemnode = document.createElement("li");
+
+	var deq = document.createElement("span");
+	deq.onclick = dequeuer_for(track);
+	deq.appendChild(document.createTextNode("deq"));
+	itemnode.appendChild(deq);
+
+	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
+	listnode.appendChild(itemnode);
+    }
+
+    d.innerHTML = "";
+    d.appendChild(listnode);
 }
 
 function update_history(entries) {
@@ -97,15 +115,50 @@ function enqueuer_for(trackEntries) {
     return function () { do_enqueue(trackEntries); };
 }
 
+function do_dequeue(track) {
+    jb.dequeue(track).addCallback(update_player_status);
+}
+
+function dequeuer_for(track) {
+    return function () { do_dequeue(track); };
+}
+
 dojo.widget.registerWidgetPackage("jukebox");
 dojo.widget.defineWidget("jukebox.TrackWidget", dojo.widget.HtmlWidget,
 {
     widgetType: "TrackWidget",
-    isContainer: true,
-
-    templatePath: "TrackWidget.html",
 
     track: null,
+
+    buildRendering: function(args, frag) {
+	this.domNode = document.createElement("span");
+	this.domNode.className = "jukeboxTrack";
+
+	var linknode = document.createElement("a");
+	linknode.href = this.track.url;
+	linknode.appendChild(document.createTextNode("(...)"));
+	this.domNode.appendChild(linknode);
+
+	var urlParts = this.track.url.split("/");
+
+	var partstr = urlParts[urlParts.length - 1];
+	partstr = unescape(partstr);
+	partstr = partstr.replace(/_/g, ' ');
+
+	var abbrnode = document.createElement("abbr");
+	abbrnode.title = this.track.url;
+	abbrnode.appendChild(document.createTextNode(partstr));
+	abbrnode.appendChild(document.createTextNode(" "));
+
+	var partnode = document.createElement("span");
+	partnode.className = "finalUrlPart";
+	partnode.appendChild(abbrnode);
+	this.domNode.appendChild(partnode);
+
+	if (this.track.username) {
+	    this.domNode.appendChild(document.createTextNode(" (" + this.track.username + ")"));
+	}
+    },
 });
 
 function display_search_results(results, divnode) {
@@ -119,31 +172,7 @@ function display_search_results(results, divnode) {
 	enq.appendChild(document.createTextNode("enq"));
 	itemnode.appendChild(enq);
 
-	var linknode = document.createElement("a");
-	linknode.href = track.url;
-	linknode.appendChild(document.createTextNode("(...)"));
-	itemnode.appendChild(linknode);
-
-	var urlParts = track.url.split("/");
-	var partsnode = document.createElement("span");
-	partsnode.className = "parts";
-	itemnode.appendChild(partsnode);
-	var startIndex = urlParts.length > 4 ? urlParts.length - 4 : 0;
-	for (var j = startIndex; j < urlParts.length; j++) {
-	    var partstr = urlParts[j];
-	    partstr = unescape(partstr);
-	    partstr = partstr.replace(/_/g, ' ');
-
-	    var partnode = document.createElement("span");
-	    partnode.className = "p" + (j - startIndex);
-	    partnode.appendChild(document.createTextNode(partstr));
-	    partsnode.appendChild(document.createTextNode(" "));
-	    partsnode.appendChild(partnode);
-	}
-	if (track.username) {
-	    itemnode.appendChild(document.createTextNode(" (" + track.username + ")"));
-	}
-
+	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
 

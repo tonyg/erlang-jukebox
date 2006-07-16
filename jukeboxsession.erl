@@ -62,6 +62,9 @@ handler(_, {call, enqueue, [EntryList]}, Session) ->
     Q = tqueue:from_json(EntryList),
     player:enqueue(Session#session.username, Q),
     {false, {response, summary_to_json(player:get_queue())}};
+handler(_, {call, dequeue, [Entry]}, _Session) ->
+    player:dequeue(tqueue:entry_from_json(Entry)),
+    {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, get_queue, _}, _) ->
     {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, skip, _}, Session) ->

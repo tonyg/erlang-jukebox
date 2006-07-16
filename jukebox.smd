@@ -26,6 +26,10 @@
 	    parameters: [{name:"trackEntryList"}]
 	},
 	{
+	    name: "dequeue",
+	    parameters: [{name:"trackEntry"}]
+	},
+	{
 	    name: "get_queue",
 	    parameters: [{name:"dummy",type:"STRING"}]
 	},
