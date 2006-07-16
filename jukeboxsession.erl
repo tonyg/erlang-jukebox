@@ -27,18 +27,31 @@ summary_to_json({{Status, Entry}, Q}) ->
 	      {entry, tqueue:entry_to_json(Entry)},
 	      {queue, tqueue:to_json(Q)}]}.
 
-log(Session, What) ->
-    history:format(history, "~p: ~p", [Session#session.username, What]).
+history_to_json(H) ->
+    {array, lists:map(fun ({Who, {What, Entry}}) ->
+			      {struct, [{who, Who},
+					{what, atom_to_list(What)}
+					| Entry]}
+		      end, H)}.
+
+log(Session, What, JsonFields) ->
+    history:record(history, Session#session.username, {What, JsonFields}).
 
 %% handler(State which we mostly ignore, Request = {call, Method, Arglist}, Session)
 handler(State, Request, undefined) ->
     handler(State, Request, State);
 handler(_, {call, login, [NewName]}, Session) ->
     NewSession = Session#session{username = NewName},
+    if
+	Session#session.username /= NewName ->
+	    log(NewSession, login, []);
+	true -> ok
+    end,
     {true, 0, NewSession, {response, r_user_id(NewSession)}};
 handler(_, {call, whoami, _}, Session) ->
     {false, {response, r_user_id(Session)}};
 handler(_, {call, logout, _}, Session) ->
+    log(Session, logout, []),
     NewSession = Session#session{username = default_name(Session)},
     {true, 0, NewSession, {response, r_user_id(NewSession)}};
 handler(_, {call, search, [{array, Keys}]}, _Session) ->
@@ -47,15 +60,19 @@ handler(_, {call, search, [{array, Keys}]}, _Session) ->
 handler(_, {call, enqueue, [EntryList]}, Session) ->
     Q = tqueue:from_json(EntryList),
     player:enqueue(Session#session.username, Q),
-    lists:foreach(fun (#entry{url=Url}) -> log(Session, "enqueued " ++ Url) end, queue:to_list(Q)),
     {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, get_queue, _}, _) ->
     {false, {response, summary_to_json(player:get_queue())}};
-handler(_, {call, skip, _}, _) ->
-    {false, {response, summary_to_json(player:skip())}};
+handler(_, {call, skip, _}, Session) ->
+    {ok, SkippedTrack, NewState} = player:skip(),
+    log(Session, skip, [{track, tqueue:entry_to_json(SkippedTrack)}]),
+    {false, {response, summary_to_json(NewState)}};
 handler(_, {call, pause, [P]}, _) ->
     {false, {response, summary_to_json(player:pause(P))}};
 handler(_, {call, clear_queue, _}, _) ->
     {false, {response, summary_to_json(player:clear_queue())}};
 handler(_, {call, get_history, [N]}, _) ->
-    {false, {response, {array, history:retrieve(history, N)}}}.
+    {false, {response, history_to_json(history:retrieve(history, N))}};
+handler(_, {call, chat, [Message]}, Session) ->
+    log(Session, says, [{message, Message}]),
+    {false, {response, true}}.

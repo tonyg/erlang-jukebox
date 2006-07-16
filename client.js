@@ -14,7 +14,11 @@ var jb = new dojo.rpc.JsonService("jukebox.smd");
 var refresh_timer = new dojo.animation.Timer(5000);
 refresh_timer.onTick = function () {
     jb.get_queue("dummy").addCallback(update_player_status);
-    jb.get_history(5).addCallback(update_history);
+    refresh_history();
+}
+
+function refresh_history() {
+    jb.get_history(15).addCallback(update_history);
 }
 
 function update_username(jbResp) {
@@ -31,9 +35,35 @@ function update_player_status(status) {
 }
 
 function update_history(entries) {
+    var listnode = document.createElement("ol");
+    for (var i = entries.length - 1; i >= 0; i--) {
+	var entry = entries[i];
+	var itemnode = document.createElement("li");
+
+	var whonode = document.createElement("span");
+	whonode.className = "who";
+	whonode.appendChild(document.createTextNode(entry.who));
+
+	var whatnode = document.createElement("span");
+	whatnode.className = "what";
+	whatnode.appendChild(document.createTextNode(entry.what + " "));
+	if (entry.track) {
+	    whatnode.appendChild(document.createTextNode(entry.track.url));
+	}
+	if (entry.message) {
+	    whatnode.appendChild(document.createTextNode('"' + entry.message + '"'));
+	}
+
+	itemnode.appendChild(whonode);
+	itemnode.appendChild(document.createTextNode(" "));
+	itemnode.appendChild(whatnode);
+
+	listnode.appendChild(itemnode);
+    }
+
     var h = document.getElementById("history");
     h.innerHTML = "";
-    h.appendChild(document.createTextNode(dojo.json.serialize(entries)));
+    h.appendChild(listnode);
 }
 
 function change_username() {
@@ -139,8 +169,22 @@ function do_search() {
 				});
 }
 
+function send_chat() {
+    var n = document.getElementById("chatMessage");
+    jb.chat(n.value).addCallback(refresh_history);
+    n.value = "";
+}
+
 function initClient() {
-    jb.whoami('dummy').addCallback(update_username);
+    var username = document.location.search.match(/username=([^&]+)/);
+    if (username) { username = unescape(username[1]); }
+
+    if (username) {
+	document.getElementById('username').value = username;
+	change_username();
+    } else {
+	jb.whoami('dummy').addCallback(update_username);
+    }
 
     refresh_timer.start();
     refresh_timer.onTick();

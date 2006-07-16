@@ -34,6 +34,10 @@ hr {
     display: none;
 }
 
+form {
+    display: inline;
+}
+
 h2 {
     border-bottom: 1px solid black;
 }
@@ -60,6 +64,7 @@ ol {
 
 div.history ol {
     list-style-type: none;
+    padding: 0px;
 }
 
 ol li {

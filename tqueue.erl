@@ -11,12 +11,14 @@ tqueue_entry(Url, Username) ->
 from_list(Urls, Username) ->
     queue:from_list(lists:map(fun (U) -> tqueue_entry(U, Username) end, Urls)).
 
+entry_to_json(null) -> null;
 entry_to_json(#entry{id = {Node, Stamp}, url = Url, username = Username}) ->
     {struct, [{id, {array, [atom_to_list(Node),
 			    {array, tuple_to_list(Stamp)}]}},
 	      {url, Url},
 	      {username, Username}]}.
 
+entry_from_json(null) -> null;
 entry_from_json(J) ->
     {array, [NodeStr, {array, StampList}]} = json:obj_fetch(id, J),
     Url = json:obj_fetch(url, J),

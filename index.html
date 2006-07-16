@@ -8,9 +8,12 @@
   </head>
   <body>
     <div class="controls">
-      Username: <input id="username" value="?" />
-      <button onclick="change_username()">Set</button>
-      <button onclick="do_logout()">Logout</button>
+      <form onsubmit="change_username(); return false;">
+	Username: <input id="username" value="?" />
+      </form>
+      <button onclick="change_username()">Change</button>
+      <button onclick="do_logout()">Forget</button>
+      <br>
       <button onclick="do_skip()">Skip</button>
       <button onclick="do_pause(true)">Pause</button>
       <button onclick="do_pause(false)">Unpause</button>
@@ -34,7 +37,7 @@
 	<div dojoType="TitlePane"
 	     label="Search" labelNodeClass="paneLabel"
 	     containerNodeClass="paneBody searchpanel">
-	  <form onsubmit="alert('hi')">
+	  <form>
 	    <input id="searchtext" value="" />
 	    <button onclick="do_search(); return false;">Search</button>
 	  </form>
@@ -42,10 +45,13 @@
 	<div dojoType="TitlePane"
 	     label="History" labelNodeClass="paneLabel"
 	     containerNodeClass="paneBody">
-	  <div class="historyPanel"
+	  <div class="history"
 	       id="history"
 	       dojoType="ContentPane">
 	  </div>
+	  <form onsubmit="send_chat(); return false;">
+	    <input id="chatMessage" value="" />
+	  </form>
 	</div>
       </div>
       <div dojoType="TitlePane"

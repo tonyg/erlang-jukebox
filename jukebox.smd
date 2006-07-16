@@ -46,5 +46,9 @@
 	    name: "get_history",
 	    parameters: [{name:"entryCount",type:"NUMBER"}]
 	},
+	{
+	    name: "chat",
+	    parameters: [{name:"message",type:"STRING"}]
+	},
     ]
 }
