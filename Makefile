@@ -4,12 +4,17 @@ TARGETS=$(patsubst %.erl,%.beam,$(SOURCES))
 all: $(TARGETS)
 	make -C ibrowse-1.0/src
 
-run: all
+dojo: dojo.zip
+	rm -rf dojo
+	unzip dojo.zip
+
+run: all dojo
 	chmod a+x wrapper.sh
 	/opt/yaws/bin/yaws --conf yaws.conf -i
 
 clean: cleanlog
 	rm -f $(TARGETS)
+	rm -rf dojo
 	make -C ibrowse-1.0/src clean
 
 cleanlog:
