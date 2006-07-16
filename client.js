@@ -114,8 +114,7 @@ function display_search_results(results, divnode) {
 	var track = results[i];
 	var itemnode = document.createElement("li");
 
-	var enq = document.createElement("a");
-	enq.href = "#";
+	var enq = document.createElement("span");
 	enq.onclick = enqueuer_for([track]);
 	enq.appendChild(document.createTextNode("enq"));
 	itemnode.appendChild(enq);
