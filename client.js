@@ -97,9 +97,13 @@ function display_search_results(results, divnode) {
 	itemnode.appendChild(partsnode);
 	var startIndex = urlParts.length > 4 ? urlParts.length - 4 : 0;
 	for (var j = startIndex; j < urlParts.length; j++) {
+	    var partstr = urlParts[j];
+	    partstr = unescape(partstr);
+	    partstr = partstr.replace(/_/g, ' ');
+
 	    var partnode = document.createElement("span");
 	    partnode.className = "p" + (j - startIndex);
-	    partnode.appendChild(document.createTextNode(urlParts[j]));
+	    partnode.appendChild(document.createTextNode(partstr));
 	    partsnode.appendChild(document.createTextNode(" "));
 	    partsnode.appendChild(partnode);
 	}
@@ -120,13 +124,15 @@ function addMainTab(w) {
 function do_search() {
     var searchtext = document.getElementById("searchtext").value;
     var keys = searchtext.split(/ +/);
-    jb.search(keys).addCallback
-    (function (results) {
-	 var p = dojo.widget.createWidget("ContentPane", {label: searchtext});
-	 //p.extraArgs.onClose = function () { alert("hi"); return true; };
-	 display_search_results(results, p.domNode);
-	 addMainTab(p);
-     });
+
+    var p = dojo.widget.createWidget("ContentPane", {label: searchtext});
+    //p.extraArgs.onClose = function () { alert("hi"); return true; };
+    p.domNode.innerHTML = "Searching...";
+    addMainTab(p);
+
+    jb.search(keys).addCallback(function (results) {
+				    display_search_results(results, p.domNode);
+				});
 }
 
 function initClient() {
