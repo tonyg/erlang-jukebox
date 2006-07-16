@@ -112,6 +112,6 @@ div.paneBody {
 }
 
 div.playlistQueue {
-    height: 4em !important;
+    height: 6em !important;
     overflow: auto;
 }

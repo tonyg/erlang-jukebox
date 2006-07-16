@@ -27,6 +27,13 @@ function update_username(jbResp) {
     document.getElementById('username').value = jbResp[0];
 }
 
+function button(actionfn, icon) {
+    var b = document.createElement("img");
+    b.onclick = actionfn;
+    b.src = icon;
+    return b;
+}
+
 function update_player_status(status) {
     var s = document.getElementById("statusatom");
     var n = document.getElementById("nowplaying");
@@ -40,18 +47,16 @@ function update_player_status(status) {
     for (var i = 0; i < status.queue.length; i++) {
 	var track = status.queue[i];
 	var itemnode = document.createElement("li");
-
-	var deq = document.createElement("span");
-	deq.onclick = dequeuer_for(track);
-	deq.appendChild(document.createTextNode("deq"));
-	itemnode.appendChild(deq);
-
+	itemnode.appendChild(button(dequeuer_for(track), "icons/deq-icon.png"));
 	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
 
     d.innerHTML = "";
     d.appendChild(listnode);
+
+    var deqAll = dojo.widget.createWidget("Button", {caption: "Dequeue all"}, d, "first");
+    dojo.event.connect(deqAll, "onClick", do_clear_queue);
 }
 
 function update_history(entries) {
@@ -166,12 +171,7 @@ function display_search_results(results, divnode) {
     for (var i = 0; i < results.length; i++) {
 	var track = results[i];
 	var itemnode = document.createElement("li");
-
-	var enq = document.createElement("span");
-	enq.onclick = enqueuer_for([track]);
-	enq.appendChild(document.createTextNode("enq"));
-	itemnode.appendChild(enq);
-
+	itemnode.appendChild(button(enqueuer_for([track]), "icons/enq-icon.png"));
 	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
