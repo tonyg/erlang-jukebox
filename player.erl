@@ -7,8 +7,6 @@
 -export([enqueue/2, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
 -export([init/1, handle_call/3, handle_info/2]).
 
--export([join/2]).
-
 %---------------------------------------------------------------------------
 
 start(Sconf) ->
@@ -75,58 +73,44 @@ handle_call({lower, QEntry}, _From, State) ->
 handle_call(get_queue, _From, State) ->
     act_and_reply(State);
 handle_call(skip, _From, State) ->
-    case State#state.status of
-	idle ->
-	    ok;
-	{_Other, _Entry, {UnixPid, Port}} ->
-	    os:cmd("kill -KILL " ++ integer_to_list(UnixPid)),
-	    receive
-		{Port, {exit_status, _Code}} -> ok
-	    end
-    end,
-    act_and_reply(State#state{status = idle});
+    Entry = case State#state.status of
+		idle -> null;
+		{_Other, CurrentEntry, PlayerPid} ->
+		    execdaemon:command(PlayerPid, sendsig, integer_to_list(9)),
+		    execdaemon:wait_for_event(PlayerPid),
+		    CurrentEntry
+	    end,
+    NewState = act_on(State#state{status = idle}),
+    {reply, {ok, Entry, summarise_state(NewState)}, NewState};
 handle_call({pause, On}, _From, State) ->
     case State#state.status of
 	idle -> act_and_reply(State);
-	{_Other, Entry, {UnixPid, Port}} ->
+	{_Other, Entry, PlayerPid} ->
 	    NewState = case On of
-			   true -> os:cmd("kill -TSTP " ++ integer_to_list(UnixPid)), paused;
-			   false -> os:cmd("kill -CONT " ++ integer_to_list(UnixPid)), playing
+			   true -> execdaemon:command(PlayerPid, sendsig, integer_to_list(18)),
+				   paused;
+			   false -> execdaemon:command(PlayerPid, sendsig, integer_to_list(19)),
+				    playing
 		       end,
-	    act_and_reply(State#state{status = {NewState, Entry, {UnixPid, Port}}})
+	    act_and_reply(State#state{status = {NewState, Entry, PlayerPid}})
     end;
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 
-handle_info({Port, {exit_status, _Code}}, State) when is_port(Port) ->
+handle_info({execdaemon_event, PlayerPid, _Code, _Aux}, State) ->
+    execdaemon:terminate(PlayerPid),
+    {noreply, State};
+handle_info({execdaemon_eof, _PlayerPid}, State) ->
     {noreply, act_on(State#state{status = idle})};
-handle_info(_Msg, State) ->
+handle_info(Msg, State) ->
+    io:format("Subprocess: ~p~n", Msg),
     {noreply, State}.
-
-join([], _) -> "";
-join([X], _) -> X;
-join([X | XS], Sep) -> X ++ Sep ++ join(XS, Sep).
-
-shell_escape(S) ->
-    lists:reverse("'" ++ shell_escape("'", S)).
-shell_escape(Acc, []) ->
-    Acc;
-shell_escape(Acc, "'" ++ S) ->
-    shell_escape("'\"'\"'" ++ Acc, S);
-shell_escape(Acc, [C | S]) ->
-    shell_escape([C | Acc], S).
 
 play(Url) ->
     Extension = filename:extension(Url),
     {ok, Template} = player_mapping(Extension),
-    Escaped = shell_escape(Url),
-    CommandLine = lists:map(fun (url) ->
-				    Escaped;
-				(Part) -> Part
-			    end, Template),
-    Cmd = join(["./wrapper.sh" | CommandLine], " "),
-    Port = open_port({spawn, Cmd}, [exit_status]),
-    receive
-	{Port, {data, UnixPid}} ->
-	    {list_to_integer(string:strip(UnixPid, right, $\n)), Port}
-    end.
+    [Program | CommandLine] = lists:map(fun
+					    (url) -> Url;
+					    (Part) -> Part
+					end, Template),
+    execdaemon:run(Program, CommandLine).

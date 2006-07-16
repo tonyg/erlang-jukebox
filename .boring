@@ -26,4 +26,5 @@
 \.cvsignore$
 ^scratch($|/)
 ^dojo($|/)
+^execdaemon/execdaemon$
 \.beam$

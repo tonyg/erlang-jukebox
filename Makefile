@@ -2,6 +2,7 @@ SOURCES=$(wildcard *.erl)
 TARGETS=$(patsubst %.erl,%.beam,$(SOURCES))
 
 all: $(TARGETS)
+	make -C execdaemon
 	make -C ibrowse-1.0/src
 
 dojo: dojo.zip
@@ -10,7 +11,6 @@ dojo: dojo.zip
 	touch dojo
 
 run: all dojo
-	chmod a+x wrapper.sh
 	/opt/yaws/bin/yaws --conf yaws.conf -i
 
 clean: cleanlog
