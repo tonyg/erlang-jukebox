@@ -2,12 +2,14 @@ dojo.require("dojo.rpc.JsonService");
 dojo.require("dojo.animation.Timer");
 
 dojo.require("dojo.widget.Manager");
+dojo.require("dojo.widget.Button");
 dojo.require("dojo.widget.LayoutContainer");
 dojo.require("dojo.widget.ContentPane");
 dojo.require("dojo.widget.LinkPane");
 dojo.require("dojo.widget.SplitContainer");
 dojo.require("dojo.widget.TabContainer");
 dojo.require("dojo.widget.TitlePane");
+dojo.require("dojo.event.*");
 
 var jb = new dojo.rpc.JsonService("jukebox.smd");
 
@@ -36,6 +38,7 @@ function update_player_status(status) {
 
 function update_history(entries) {
     var listnode = document.createElement("ol");
+
     for (var i = entries.length - 1; i >= 0; i--) {
 	var entry = entries[i];
 	var itemnode = document.createElement("li");
@@ -147,6 +150,9 @@ function display_search_results(results, divnode) {
 
     divnode.innerHTML = "";
     divnode.appendChild(listnode);
+
+    var enqAll = dojo.widget.createWidget("Button", {caption: "Enqueue all"}, divnode, "first");
+    dojo.event.connect(enqAll, "onClick", enqueuer_for(results));
 }
 
 function addMainTab(w) {
