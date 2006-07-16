@@ -4,8 +4,9 @@
 
 -record(session, {username, ip}).
 
-default_name(_Session) ->
-    lists:flatten(io_lib:format("Anonymous Coward", [])).
+default_name(Session) ->
+    Digits = tuple_to_list(Session#session.ip),
+    lists:flatten(io_lib:format("~p.~p.~p.~p", Digits)).
 
 initial_state(IP) ->
     #session{username = default_name(#session{ip = IP}),

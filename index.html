@@ -8,10 +8,10 @@
   </head>
   <body>
     <div class="controls">
-      <form onsubmit="change_username(); return false;">
-	Username: <input id="username" value="?" />
+      <form action="index.html" method="GET">
+	Username: <input id="username" name="username" value="?" />
+	<input type="submit" name="action" value="Change" />
       </form>
-      <button onclick="change_username()">Change</button>
       <button onclick="do_logout()">Forget</button>
       <br>
       <button onclick="do_skip()">Skip</button>
