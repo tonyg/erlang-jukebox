@@ -16,6 +16,7 @@ run: all dojo
 clean: cleanlog
 	rm -f $(TARGETS)
 	rm -rf dojo
+	make -C execdaemon clean
 	make -C ibrowse-1.0/src clean
 
 cleanlog:
