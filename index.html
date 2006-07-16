@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css" type="text/css"/>
   </head>
   <body>
-    <h1>Erlang Jukebox</h1>
     <div class="controls">
       Username: <input id="username" value="?" />
       <button onclick="change_username()">Set</button>
@@ -17,36 +16,46 @@
       <button onclick="do_pause(false)">Unpause</button>
       <button onclick="do_clear_queue()">Clear Queue</button>
     </div>
-    <div class="playerstatus">
+    <div class="now-playing">
       <span id="statusatom">?</span>
       <span id="nowplaying">?</span>
+    </div>
+    <div dojoType="TitlePane"
+	 label="Queue" labelNodeClass="paneLabel"
+	 containerNodeClass="paneBody playlistQueue">
       <div id="statuspanel"></div>
     </div>
-    <div class="searchpanel">
-      <form onsubmit="alert('hi')">
-	<input id="searchtext" value="" />
-	<button onclick="do_search(); return false;">Search</button>
-      </form>
-    </div>
-
     <div dojoType="LayoutContainer"
 	 layoutChildPriority='top-bottom'
 	 style="width: 100%; height: 100%;">
       <div dojoType="ContentPane"
-	   layoutAlign="right">
-	<div class="historyPanel"
-	     style="width: 300px"
-	     id="history"
-	     layoutAlign="right"
-	     dojoType="ContentPane">
+	   style="width: 300px"
+	   layoutAlign="left">
+	<div dojoType="TitlePane"
+	     label="Search" labelNodeClass="paneLabel"
+	     containerNodeClass="paneBody searchpanel">
+	  <form onsubmit="alert('hi')">
+	    <input id="searchtext" value="" />
+	    <button onclick="do_search(); return false;">Search</button>
+	  </form>
+	</div>
+	<div dojoType="TitlePane"
+	     label="History" labelNodeClass="paneLabel"
+	     containerNodeClass="paneBody">
+	  <div class="historyPanel"
+	       id="history"
+	       dojoType="ContentPane">
+	  </div>
 	</div>
       </div>
-      <div dojoType="ContentPane"
+      <div dojoType="TitlePane"
+	   label="Track Lists" labelNodeClass="paneLabel"
+	   containerNodeClass="paneBody"
 	   layoutAlign="client">
 	<div id="mainTabContainer"
 	     dojo:closeButton="tab"
 	     dojoType="TabContainer"
-	     style="height: 70%">
+	     style="height: 300px">
 	</div>
       </div>
     </div>

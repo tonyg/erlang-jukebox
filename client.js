@@ -7,6 +7,7 @@ dojo.require("dojo.widget.ContentPane");
 dojo.require("dojo.widget.LinkPane");
 dojo.require("dojo.widget.SplitContainer");
 dojo.require("dojo.widget.TabContainer");
+dojo.require("dojo.widget.TitlePane");
 
 var jb = new dojo.rpc.JsonService("jukebox.smd");
 
