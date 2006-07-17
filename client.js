@@ -17,10 +17,15 @@ var refresh_timer = new dojo.animation.Timer(5000);
 refresh_timer.onTick = function () {
     jb.get_queue("dummy").addCallback(update_player_status);
     refresh_history();
+    refresh_volume();
 }
 
 function refresh_history() {
     jb.get_history(15).addCallback(update_history);
+}
+
+function refresh_volume() {
+    jb.get_volume('dummy').addCallback(update_volume);
 }
 
 function update_username(jbResp) {
@@ -95,6 +100,10 @@ function update_history(entries) {
     var h = document.getElementById("history");
     h.innerHTML = "";
     h.appendChild(listnode);
+}
+
+function update_volume(vol) {
+    document.getElementById("volume").innerHTML = vol;
 }
 
 function change_username() {

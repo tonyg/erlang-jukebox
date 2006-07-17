@@ -54,5 +54,14 @@
 	    name: "chat",
 	    parameters: [{name:"message",type:"STRING"}]
 	},
+
+	{
+	    name: "get_volume",
+	    parameters: [{name:"dummy",type:"STRING"}]
+	},
+	{
+	    name: "set_volume",
+	    parameters: [{name:"newvol",type:"NUMBER"}]
+	},
     ]
 }

@@ -79,4 +79,8 @@ handler(_, {call, get_history, [N]}, _) ->
     {false, {response, history_to_json(history:retrieve(history, N))}};
 handler(_, {call, chat, [Message]}, Session) ->
     log(Session, says, [{message, Message}]),
-    {false, {response, true}}.
+    {false, {response, true}};
+handler(_, {call, get_volume, _}, Session) ->
+    {false, {response, player:get_volume()}};
+handler(_, {call, set_volume, [NewVol]}, _) ->
+    {false, {response, player:set_volume(NewVol)}}.
