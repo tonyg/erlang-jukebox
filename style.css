@@ -38,10 +38,6 @@ form {
     display: inline;
 }
 
-h2 {
-    border-bottom: 1px solid black;
-}
-
 div.search br {
     display: none;
 }
@@ -97,7 +93,13 @@ span.parts abbr {
     border: none;
 }
 
-div.paneLabel {
+h2, div.paneLabel {
+    border-bottom: 1px solid black;
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 1em;
+    margin-top: 0.5em;
+/*
     background-color: #88f;
     color: white;
     border: solid black 1px;
@@ -105,6 +107,7 @@ div.paneLabel {
     height: 1em;
     margin-top: 2px;
     margin-bottom: 2px;
+*/
 }
 
 div.paneBody {

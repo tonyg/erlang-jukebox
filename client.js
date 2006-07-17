@@ -38,10 +38,14 @@ function update_player_status(status) {
     var s = document.getElementById("statusatom");
     var n = document.getElementById("nowplaying");
     var d = document.getElementById("statuspanel");
-    s.innerHTML = ""; s.appendChild(document.createTextNode(status.status));
+    s.innerHTML = ""; s.appendChild(document.createTextNode("Now playing ("+status.status+")"));
 
     n.innerHTML = "";
-    n.appendChild(dojo.widget.createWidget("TrackWidget", {track: status.entry}).domNode);
+    if (status.entry) {
+	n.appendChild(dojo.widget.createWidget("TrackWidget", {track: status.entry}).domNode);
+    } else {
+	n.appendChild(document.createElement("br"));
+    }
 
     var listnode = document.createElement("ol");
     for (var i = 0; i < status.queue.length; i++) {
@@ -74,7 +78,8 @@ function update_history(entries) {
 	whatnode.className = "what";
 	whatnode.appendChild(document.createTextNode(entry.what + " "));
 	if (entry.track) {
-	    whatnode.appendChild(document.createTextNode(entry.track.url));
+	    whatnode.appendChild(dojo.widget.createWidget("TrackWidget",
+							  {track: entry.track}).domNode);
 	}
 	if (entry.message) {
 	    whatnode.appendChild(document.createTextNode('"' + entry.message + '"'));
@@ -183,24 +188,17 @@ function display_search_results(results, divnode) {
     dojo.event.connect(enqAll, "onClick", enqueuer_for(results));
 }
 
-function addMainTab(w) {
-    var tc = dojo.widget.byId("mainTabContainer");
-    tc.addChild(w);
-    tc.selectTab(w);
-}
-
 function do_search() {
     var searchtext = document.getElementById("searchtext").value;
     var keys = searchtext.split(/ +/);
 
-    var p = dojo.widget.createWidget("ContentPane", {label: searchtext});
-    //p.extraArgs.onClose = function () { alert("hi"); return true; };
-    p.domNode.innerHTML = "Searching...";
-    addMainTab(p);
+    var p = document.getElementById("searchResults");
+    p.innerHTML = "Searching...";
 
     jb.search(keys).addCallback(function (results) {
-				    display_search_results(results, p.domNode);
+				    display_search_results(results, p);
 				});
+    return false;
 }
 
 function send_chat() {

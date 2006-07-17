@@ -10,7 +10,7 @@
     <div class="controls">
       <form action="index.html" method="GET">
 	Username: <input id="username" name="username" value="?" />
-	<input type="submit" name="action" value="Change" />
+	<input type="submit" value="Change" />
       </form>
       <button onclick="do_logout()">Forget</button>
       <br>
@@ -19,7 +19,7 @@
       <button onclick="do_pause(false)">Unpause</button>
     </div>
     <div class="now-playing">
-      <span id="statusatom">?</span>
+      <h2 id="statusatom">?</h2>
       <span id="nowplaying">?</span>
     </div>
     <div dojoType="TitlePane"
@@ -54,13 +54,10 @@
 	</div>
       </div>
       <div dojoType="TitlePane"
-	   label="Track Lists" labelNodeClass="paneLabel"
+	   label="Search Results" labelNodeClass="paneLabel"
 	   containerNodeClass="paneBody"
 	   layoutAlign="client">
-	<div id="mainTabContainer"
-	     dojo:closeButton="tab"
-	     dojoType="TabContainer"
-	     style="height: 300px">
+	<div id="searchResults">
 	</div>
       </div>
     </div>
