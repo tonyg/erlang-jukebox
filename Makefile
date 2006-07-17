@@ -24,4 +24,4 @@ cleanlog:
 	rm -f *.access
 
 %.beam: %.erl
-	erlc $<
+	erlc -I /opt/yaws/lib/yaws/include $<
