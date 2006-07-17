@@ -59,7 +59,6 @@ static struct SignalTable {
   { "PROF", SIGPROF },
   { "WINCH", SIGWINCH },
   { "IO", SIGIO },
-  { "PWR", SIGPWR },
   { NULL, 0 }
 };
 
