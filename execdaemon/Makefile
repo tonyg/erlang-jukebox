@@ -1,7 +1,7 @@
 all: execdaemon
 
 execdaemon: execdaemon.c
-	gcc -o $@ $<
+	gcc -Wall -o $@ $<
 
 clean:
 	rm -f execdaemon
