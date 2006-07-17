@@ -10,8 +10,13 @@ dojo: dojo.zip
 	unzip dojo.zip
 	touch dojo
 
-run: all dojo
+run_prereqs: all dojo
+
+run: run_prereqs
 	/opt/yaws/bin/yaws --conf yaws.conf -i
+
+daemon: run_prereqs
+	/opt/yaws/bin/yaws --conf yaws.conf -D
 
 clean: cleanlog
 	rm -f $(TARGETS)
