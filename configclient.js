@@ -18,7 +18,9 @@ function button(actionfn, text) {
 }
 
 function do_add_root() {
-    rescanner_for(document.getElementById("new_root").value)();
+    var e = document.getElementById("new_root");
+    rescanner_for(e.value)();
+    e.value = "";
 }
 
 function do_snapshot() {
