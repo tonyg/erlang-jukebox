@@ -17,12 +17,19 @@ debug_out(true, Fmt, Args) ->
 debug_out(false, _, _) ->
     ok.
 
+retrieve(Url) ->
+    case ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 0}}]) of
+	Result = {ok, _} ->
+	    Result;
+	_ -> ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 1}}])
+    end.
+
 spider([], Results, _WantDebug) ->
     Results;
 spider([Url | Work], Results, WantDebug) ->
     {ok, RE} = regexp:parse("[hH][rR][eE][fF]=\"([^\"]*)\""),
     debug_out(WantDebug, "Spidering ~p~n", [Url]),
-    case ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 0}}]) of
+    case retrieve(Url) of
 	{ok, "3" ++ _CodeRest, Headers, _Body} ->
 	    case lists:keysearch("Location", 1, Headers) of
 		{value, {_, Replacement}} ->
