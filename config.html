@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <title>Erlang Jukebox - Config</title>
+    <script>djConfig = { isDebug: false }</script>
+    <script type="text/javascript" src="dojo/dojo.js"></script>
+    <script type="text/javascript" src="configclient.js"></script>
+    <link rel="stylesheet" href="style.css" type="text/css"/>
+  </head>
+  <body>
+    <h1>Configuration</h1>
+    <h2>All roots</h2>
+    <div id="roots"></div>
+    <h2>Current Rescans</h2>
+    <div id="rescans"></div>
+    <h2>Controls</h2>
+    <div>
+      <input id="new_root" value="" />
+      <button onclick="do_add_root()">Add root</button>
+    </div>
+    <br />
+    <button onclick="do_snapshot()">Save changes to disk</button>
+    <script>dojo.addOnLoad(initConfigClient);</script>
+  </body>
+</html>

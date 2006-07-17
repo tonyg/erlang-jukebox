@@ -1,0 +1,3 @@
+<erl>
+out(A) -> jrpc:serve(A, configsession).
+</erl>
