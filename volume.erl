@@ -37,7 +37,7 @@ hmix_get_volume() ->
 	    VolStr = string:substr(Out, Start, Length),
 	    list_to_integer(VolStr);
 	false ->
-	    unavailable
+	    null
     end.
 
 hmix_set_volume(NewVol) ->
