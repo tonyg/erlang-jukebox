@@ -132,12 +132,12 @@ function do_pause(shouldPause) {
     jb.pause(shouldPause).addCallback(update_player_status);
 }
 
-function do_enqueue(trackEntries) {
-    jb.enqueue(trackEntries).addCallback(update_player_status);
+function do_enqueue(trackEntries, atTop) {
+    jb.enqueue(trackEntries, atTop).addCallback(update_player_status);
 }
 
-function enqueuer_for(trackEntries) {
-    return function () { do_enqueue(trackEntries); };
+function enqueuer_for(trackEntries, atTop) {
+    return function () { do_enqueue(trackEntries, atTop); };
 }
 
 function do_dequeue(track) {
@@ -192,7 +192,9 @@ function display_search_results(results, divnode) {
     for (var i = 0; i < results.length; i++) {
 	var track = results[i];
 	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(enqueuer_for([track]), "enqueue"));
+	itemnode.appendChild(button(enqueuer_for([track], false), "enqueue"));
+	itemnode.appendChild(document.createTextNode(" "));
+	itemnode.appendChild(button(enqueuer_for([track], true), "@top"));
 	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
@@ -201,7 +203,7 @@ function display_search_results(results, divnode) {
     divnode.appendChild(listnode);
 
     var enqAll = dojo.widget.createWidget("Button", {caption: "Enqueue all"}, divnode, "first");
-    dojo.event.connect(enqAll, "onClick", enqueuer_for(results));
+    dojo.event.connect(enqAll, "onClick", enqueuer_for(results, false));
 }
 
 function do_search() {

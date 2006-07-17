@@ -58,9 +58,9 @@ handler(_, {call, logout, _}, Session) ->
 handler(_, {call, search, [{array, Keys}]}, _Session) ->
     Tracks = trackdb:search_tracks(Keys),
     {false, {response, tqueue:to_json(Tracks)}};
-handler(_, {call, enqueue, [EntryList]}, Session) ->
+handler(_, {call, enqueue, [EntryList, AtTop]}, Session) ->
     Q = tqueue:from_json(EntryList),
-    player:enqueue(Session#session.username, Q),
+    player:enqueue(Session#session.username, AtTop, Q),
     {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, dequeue, [Entry]}, _Session) ->
     player:dequeue(tqueue:entry_from_json(Entry)),

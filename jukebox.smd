@@ -23,7 +23,8 @@
 
 	{
 	    name: "enqueue",
-	    parameters: [{name:"trackEntryList"}]
+	    parameters: [{name:"trackEntryList"},
+			 {name:"atTop",type:"BOOLEAN"}]
 	},
 	{
 	    name: "dequeue",
