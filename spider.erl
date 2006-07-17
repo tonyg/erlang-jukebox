@@ -90,20 +90,32 @@ url_path(Url) ->
     end.
 
 process_result_url(BaseUrl, HtmlEncodedUrl, {Work, Results}) ->
-    Url = resolve_relative(BaseUrl, html_decode(HtmlEncodedUrl)),
-    Extension = filename:extension(Url),
-    case avoid_extension(Extension) of
-	true -> {Work, Results};
-	false ->
-	    case player:supports_extension(Extension) of
-		true -> {Work, [Url | Results]};
+    RelUrl = html_decode(HtmlEncodedUrl),
+    case lists:nth(1, RelUrl) of
+	$. ->
+	    {Work, Results};
+        _ ->
+	    Url = resolve_relative(BaseUrl, RelUrl),
+	    Extension = filename:extension(Url),
+	    case avoid_extension(Extension) of
+		true -> {Work, Results};
 		false ->
-		    BasePath = url_path(BaseUrl),
-		    UrlPath = url_path(Url),
-		    BaseIsPrefix = lists:prefix(BasePath, UrlPath),
-		    if
-			BasePath /= UrlPath, BaseIsPrefix -> {[Url | Work], Results};
-			true -> {Work, Results}
+		    case player:supports_extension(Extension) of
+			true -> {Work, [Url | Results]};
+			false ->
+			    case lists:nth(length(Url), Url) of
+				$/ ->
+				    BasePath = url_path(BaseUrl),
+				    UrlPath = url_path(Url),
+				    BaseIsPrefix = lists:prefix(BasePath, UrlPath),
+				    if
+					BasePath /= UrlPath, BaseIsPrefix ->
+					    {[Url | Work], Results};
+					true -> {Work, Results}
+				    end;
+				_ ->
+				    {Work, Results}
+			    end
 		    end
 	    end
     end.
