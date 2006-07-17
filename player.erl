@@ -5,7 +5,6 @@
 -export([start/1]).
 -export([supports_extension/1]).
 -export([enqueue/2, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
--export([get_volume/0, set_volume/1]).
 -export([init/1, handle_call/3, handle_info/2]).
 
 %---------------------------------------------------------------------------
@@ -36,9 +35,6 @@ get_queue() -> gen_server:call(player, get_queue).
 skip() -> gen_server:call(player, skip).
 pause(On) -> gen_server:call(player, {pause, On}).
 clear_queue() -> gen_server:call(player, clear_queue).
-
-get_volume() -> gen_server:call(player, get_volume).
-set_volume(NewVol) -> gen_server:call(player, {set_volume, NewVol}).
 
 %---------------------------------------------------------------------------
 
@@ -99,11 +95,7 @@ handle_call({pause, On}, _From, State) ->
 	    act_and_reply(State#state{status = {NewState, Entry, PlayerPid}})
     end;
 handle_call(clear_queue, _From, State) ->
-    act_and_reply(State#state{queue = queue:new()});
-handle_call(get_volume, _From, State) ->
-    {reply, hmix_get_volume(), State};
-handle_call({set_volume, NewVol}, _From, State) ->
-    {reply, hmix_set_volume(NewVol), State}.
+    act_and_reply(State#state{queue = queue:new()}).
 
 handle_info({execdaemon_event, PlayerPid, _Code, _Aux}, State) ->
     execdaemon:terminate(PlayerPid),
@@ -122,18 +114,3 @@ play(Url) ->
 					    (Part) -> Part
 					end, Template),
     execdaemon:run(Program, CommandLine).
-
-hmix_get_volume() ->
-    Out = os:cmd("hmix | grep MASTER"),
-    case lists:prefix("MASTER", Out) of
-	true ->
-	    {match, Start, Length} = regexp:match(Out, "[0-9]+"),
-	    VolStr = string:substr(Out, Start, Length),
-	    list_to_integer(VolStr);
-	false ->
-	    unavailable
-    end.
-
-hmix_set_volume(NewVol) ->
-    os:cmd("hmix -master " ++ integer_to_list(NewVol)),
-    hmix_get_volume().
