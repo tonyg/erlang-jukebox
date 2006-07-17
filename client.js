@@ -58,6 +58,10 @@ function update_player_status(status) {
 	var track = status.queue[i];
 	var itemnode = document.createElement("li");
 	itemnode.appendChild(button(dequeuer_for(track), "dequeue"));
+	itemnode.appendChild(document.createTextNode(" "));
+	itemnode.appendChild(button(raiser_for(track), "up"));
+	itemnode.appendChild(document.createTextNode("/"));
+	itemnode.appendChild(button(lowerer_for(track), "down"));
 	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
@@ -138,6 +142,18 @@ function do_enqueue(trackEntries, atTop) {
 
 function enqueuer_for(trackEntries, atTop) {
     return function () { do_enqueue(trackEntries, atTop); };
+}
+
+function raiser_for(track) {
+    return function () {
+	jb.raise(track).addCallback(update_player_status);
+    };
+}
+
+function lowerer_for(track) {
+    return function () {
+	jb.lower(track).addCallback(update_player_status);
+    };
 }
 
 function do_dequeue(track) {

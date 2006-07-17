@@ -68,14 +68,14 @@ dequeue(E, Q) -> queue:from_list(lists:delete(E, queue:to_list(Q))).
 
 raise1(_E, []) ->
     [];
-raise1({K,_}, [Y, X={XK,_} | XS]) when K == XK ->
-    [X, Y, XS];
+raise1(E, [Y, X | XS]) when E == X ->
+    [X, Y | XS];
 raise1(E, [X | XS]) ->
     [X | raise1(E, XS)].
 
 lower1(_E, []) ->
     [];
-lower1({K,_}, [X={XK,_}, Y | XS]) when K == XK ->
-    [Y, X, XS];
+lower1(E, [X, Y | XS]) when E == X ->
+    [Y, X | XS];
 lower1(E, [X | XS]) ->
     [X | lower1(E, XS)].

@@ -31,6 +31,14 @@
 	    parameters: [{name:"trackEntry"}]
 	},
 	{
+	    name: "raise",
+	    parameters: [{name:"trackEntry"}]
+	},
+	{
+	    name: "lower",
+	    parameters: [{name:"trackEntry"}]
+	},
+	{
 	    name: "get_queue",
 	    parameters: [{name:"dummy",type:"STRING"}]
 	},

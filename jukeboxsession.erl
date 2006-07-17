@@ -65,6 +65,12 @@ handler(_, {call, enqueue, [EntryList, AtTop]}, Session) ->
 handler(_, {call, dequeue, [Entry]}, _Session) ->
     player:dequeue(tqueue:entry_from_json(Entry)),
     {false, {response, summary_to_json(player:get_queue())}};
+handler(_, {call, raise, [Entry]}, _Session) ->
+    player:raise(tqueue:entry_from_json(Entry)),
+    {false, {response, summary_to_json(player:get_queue())}};
+handler(_, {call, lower, [Entry]}, _Session) ->
+    player:lower(tqueue:entry_from_json(Entry)),
+    {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, get_queue, _}, _) ->
     {false, {response, summary_to_json(player:get_queue())}};
 handler(_, {call, skip, _}, Session) ->
