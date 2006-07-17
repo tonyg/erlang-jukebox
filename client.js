@@ -32,10 +32,11 @@ function update_username(jbResp) {
     document.getElementById('username').value = jbResp[0];
 }
 
-function button(actionfn, icon) {
-    var b = document.createElement("img");
+function button(actionfn, text) {
+    var b = document.createElement("a");
+    b.className = "action-span";
     b.onclick = actionfn;
-    b.src = icon;
+    b.innerHTML = text;
     return b;
 }
 
@@ -56,7 +57,7 @@ function update_player_status(status) {
     for (var i = 0; i < status.queue.length; i++) {
 	var track = status.queue[i];
 	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(dequeuer_for(track), "icons/deq-icon.png"));
+	itemnode.appendChild(button(dequeuer_for(track), "dequeue"));
 	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
@@ -159,6 +160,7 @@ dojo.widget.defineWidget("jukebox.TrackWidget", dojo.widget.HtmlWidget,
 	this.domNode.className = "jukeboxTrack";
 
 	var linknode = document.createElement("a");
+	linknode.className = "trackUrlLink";
 	linknode.href = this.track.url;
 	linknode.appendChild(document.createTextNode("(...)"));
 	this.domNode.appendChild(linknode);
@@ -190,7 +192,7 @@ function display_search_results(results, divnode) {
     for (var i = 0; i < results.length; i++) {
 	var track = results[i];
 	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(enqueuer_for([track]), "icons/enq-icon.png"));
+	itemnode.appendChild(button(enqueuer_for([track]), "enqueue"));
 	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
 	listnode.appendChild(itemnode);
     }
@@ -230,7 +232,7 @@ function volume_setter_for(i) {
 function build_volume_ticks() {
     var container = document.getElementById("volume-ticks");
     for (var i = 0; i <= 100; i++) {
-	var link = document.createElement("span");
+	var link = document.createElement("a");
 	link.id = "volume-tick-" + i;
 	link.className = "inactive-volume-tick";
 	link.onclick = volume_setter_for(i);

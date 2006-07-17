@@ -83,7 +83,7 @@ span.parts span.p1 {
     background: #ffeeee;
 }
 
-span.parts abbr a {
+.trackUrlLink {
     margin-left: 0.5em;
     color: grey;
     text-decoration: none;
@@ -127,4 +127,14 @@ div.playlistQueue {
 .active-volume-tick {
     color: red;
     cursor: pointer;
+}
+
+.action-span {
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+}
+
+a:hover, {
+    color: red ! important;
 }
