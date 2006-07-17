@@ -102,8 +102,13 @@ function update_history(entries) {
     h.appendChild(listnode);
 }
 
-function update_volume(vol) {
-    document.getElementById("volume").innerHTML = vol;
+var current_volume = 0;
+function update_volume(result) {
+    vol = result.volume;
+    document.getElementById("volume").innerHTML = vol + "%";
+    document.getElementById("volume-tick-" + current_volume).className = "inactive-volume-tick";
+    document.getElementById("volume-tick-" + vol).className = "active-volume-tick";
+    current_volume = vol;
 }
 
 function change_username() {
@@ -216,7 +221,27 @@ function send_chat() {
     n.value = "";
 }
 
+function volume_setter_for(i) {
+    return function () {
+	jb.set_volume(i).addCallback(update_volume);
+    };
+}
+
+function build_volume_ticks() {
+    var container = document.getElementById("volume-ticks");
+    for (var i = 0; i <= 100; i++) {
+	var link = document.createElement("span");
+	link.id = "volume-tick-" + i;
+	link.className = "inactive-volume-tick";
+	link.onclick = volume_setter_for(i);
+	link.innerHTML = "|";
+	container.appendChild(link);
+    }
+}
+
 function initClient() {
+    build_volume_ticks();
+
     var username = document.location.search.match(/username=([^&]+)/);
     if (username) { username = unescape(username[1]); }
 

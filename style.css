@@ -118,3 +118,13 @@ div.playlistQueue {
     height: 6em !important;
     overflow: auto;
 }
+
+.inactive-volume-tick {
+    color: blue;
+    cursor: pointer;
+}
+
+.active-volume-tick {
+    color: red;
+    cursor: pointer;
+}

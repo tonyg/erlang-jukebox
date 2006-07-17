@@ -81,6 +81,6 @@ handler(_, {call, chat, [Message]}, Session) ->
     log(Session, says, [{message, Message}]),
     {false, {response, true}};
 handler(_, {call, get_volume, _}, Session) ->
-    {false, {response, player:get_volume()}};
+    {false, {response, {struct, [{volume, player:get_volume()}]}}};
 handler(_, {call, set_volume, [NewVol]}, _) ->
-    {false, {response, player:set_volume(NewVol)}}.
+    {false, {response, {struct, [{volume, player:set_volume(NewVol)}]}}}.
