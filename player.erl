@@ -76,7 +76,7 @@ handle_call(skip, _From, State) ->
     Entry = case State#state.status of
 		idle -> null;
 		{_Other, CurrentEntry, PlayerPid} ->
-		    execdaemon:command(PlayerPid, sendsig, integer_to_list(9)),
+		    execdaemon:command(PlayerPid, sendsig, "KILL"),
 		    execdaemon:wait_for_event(PlayerPid),
 		    CurrentEntry
 	    end,
@@ -87,9 +87,9 @@ handle_call({pause, On}, _From, State) ->
 	idle -> act_and_reply(State);
 	{_Other, Entry, PlayerPid} ->
 	    NewState = case On of
-			   true -> execdaemon:command(PlayerPid, sendsig, integer_to_list(18)),
+			   true -> execdaemon:command(PlayerPid, sendsig, "STOP"),
 				   paused;
-			   false -> execdaemon:command(PlayerPid, sendsig, integer_to_list(19)),
+			   false -> execdaemon:command(PlayerPid, sendsig, "CONT"),
 				    playing
 		       end,
 	    act_and_reply(State#state{status = {NewState, Entry, PlayerPid}})
