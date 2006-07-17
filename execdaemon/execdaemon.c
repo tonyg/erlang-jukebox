@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -24,6 +25,43 @@ static int arg_count = 0;
 static char **arg_list = NULL;
 
 #define COMMAND_TERMINATOR '\0'
+
+static struct SignalTable {
+  char *sig_name;
+  int sig_num;
+} signal_table[] = {
+  { "HUP", SIGHUP },
+  { "INT", SIGINT },
+  { "QUIT", SIGQUIT },
+  { "ILL", SIGILL },
+  { "TRAP", SIGTRAP },
+  { "ABRT", SIGABRT },
+  { "IOT", SIGIOT },
+  { "BUS", SIGBUS },
+  { "FPE", SIGFPE },
+  { "KILL", SIGKILL },
+  { "USR1", SIGUSR1 },
+  { "SEGV", SIGSEGV },
+  { "USR2", SIGUSR2 },
+  { "PIPE", SIGPIPE },
+  { "ALRM", SIGALRM },
+  { "TERM", SIGTERM },
+  { "CHLD", SIGCHLD },
+  { "CONT", SIGCONT },
+  { "STOP", SIGSTOP },
+  { "TSTP", SIGTSTP },
+  { "TTIN", SIGTTIN },
+  { "TTOU", SIGTTOU },
+  { "URG", SIGURG },
+  { "XCPU", SIGXCPU },
+  { "XFSZ", SIGXFSZ },
+  { "VTALRM", SIGVTALRM },
+  { "PROF", SIGPROF },
+  { "WINCH", SIGWINCH },
+  { "IO", SIGIO },
+  { "PWR", SIGPWR },
+  { NULL, 0 }
+};
 
 void append_command_char(int ch) {
   if (command_length >= command_buflen) {
@@ -150,8 +188,24 @@ void handle_execv(char *cmd, char *arg) {
   }
 }
 
+int lookup_signal(char *name) {
+  struct SignalTable *entry;
+  for (entry = &signal_table[0]; entry->sig_name != NULL; entry++) {
+    if (!strcasecmp(name, entry->sig_name)) {
+      return entry->sig_num;
+    }
+  }
+  return 0;
+}
+
 void handle_sendsig(char *cmd, char *arg) {
-  int signum = (int) strtoul(arg, NULL, 10);
+  int signum;
+  if (isdigit(arg[0])) {
+    signum = (int) strtoul(arg, NULL, 10);
+  } else {
+    signum = lookup_signal(arg);
+  }
+
   if (signum == 0) {
     write_response("bad", "invalid");
     return;
