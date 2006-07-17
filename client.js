@@ -263,7 +263,10 @@ function initClient() {
     build_volume_ticks();
 
     var username = document.location.search.match(/username=([^&]+)/);
-    if (username) { username = unescape(username[1]); }
+    if (username) {
+	username = username[1].replace(/\+/, " ");
+	username = unescape(username);
+    }
 
     if (username) {
 	document.getElementById('username').value = username;
