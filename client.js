@@ -188,7 +188,7 @@ dojo.widget.defineWidget("jukebox.TrackWidget", dojo.widget.HtmlWidget,
 	partstr = partstr.replace(/_/g, ' ');
 
 	var abbrnode = document.createElement("abbr");
-	abbrnode.title = this.track.url;
+	abbrnode.title = unescape(this.track.url);
 	abbrnode.appendChild(document.createTextNode(partstr));
 	abbrnode.appendChild(document.createTextNode(" "));
 
