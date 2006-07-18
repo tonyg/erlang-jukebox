@@ -9,7 +9,7 @@
   <body>
     <div class="controls">
       <form action="index.html" method="GET">
-	Username: <input id="username" name="username" value="?" />
+	Username: <input id="username" name="username" type="text" value="?" />
 	<input type="submit" value="Change" />
       </form>
       <button onclick="do_logout()">Forget</button>
@@ -41,7 +41,7 @@
 	     label="Search" labelNodeClass="paneLabel"
 	     containerNodeClass="paneBody searchpanel">
 	  <form>
-	    <input id="searchtext" value="" />
+	    <input id="searchtext" name="searchtext" type="text" value="" />
 	    <button onclick="do_search(); return false;">Search</button>
 	  </form>
 	</div>
@@ -53,7 +53,7 @@
 	       dojoType="ContentPane">
 	  </div>
 	  <form onsubmit="send_chat(); return false;">
-	    <input id="chatMessage" value="" />
+	    <input id="chatMessage" name="chatMessage" type="text" value="" />
 	  </form>
 	</div>
       </div>
