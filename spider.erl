@@ -19,7 +19,7 @@ debug_out(false, _, _) ->
 
 retrieve(Url) ->
     case ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 0}}]) of
-	Result = {ok, _} ->
+	Result when element(1, Result) == ok ->
 	    Result;
 	_ -> ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 1}}])
     end.
