@@ -264,7 +264,7 @@ function initClient() {
 
     var username = document.location.search.match(/username=([^&]+)/);
     if (username) {
-	username = username[1].replace(/\+/, " ");
+	username = username[1].replace(/\+/g, " ");
 	username = unescape(username);
     }
 
