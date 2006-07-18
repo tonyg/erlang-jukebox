@@ -203,23 +203,66 @@ dojo.widget.defineWidget("jukebox.TrackWidget", dojo.widget.HtmlWidget,
     },
 });
 
-function display_search_results(results, divnode) {
-    var listnode = document.createElement("ol");
+function group_by_folder(results) {
+    var groups = [];
+    var current = null;
+    var acc = [];
     for (var i = 0; i < results.length; i++) {
 	var track = results[i];
-	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(enqueuer_for([track], false), "enqueue"));
-	itemnode.appendChild(document.createTextNode(" "));
-	itemnode.appendChild(button(enqueuer_for([track], true), "@top"));
-	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
-	listnode.appendChild(itemnode);
+	var folder = track.url.match(/(.*\/)[^\/]*/)[1];
+	if (folder != current) {
+	    if (current != null) {
+		groups.push({folder: current, results: acc});
+		acc = [];
+	    }
+	    current = folder;
+	}
+	acc.push(track);
     }
+    groups.push({folder: current, results: acc});
+    return groups;
+}
+
+function display_search_results(ungrouped_results, divnode) {
+    var groups = group_by_folder(ungrouped_results);
 
     divnode.innerHTML = "";
-    divnode.appendChild(listnode);
+
+    for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+	var listnode = document.createElement("ul");
+	var group = groups[groupIndex];
+
+	for (var i = 0; i < group.results.length; i++) {
+	    var track = group.results[i];
+	    var itemnode = document.createElement("li");
+	    itemnode.appendChild(button(enqueuer_for([track], false), "enqueue"));
+	    itemnode.appendChild(document.createTextNode(" "));
+	    itemnode.appendChild(button(enqueuer_for([track], true), "@top"));
+	    itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
+	    listnode.appendChild(itemnode);
+	}
+
+	var enqF = document.createElement("a");
+	enqF.onclick = enqueuer_for(group.results, false);
+	enqF.innerHTML = "(enqueue)";
+
+	var folderName = document.createElement("a");
+	folderName.className = "folderLink";
+	folderName.href = group.folder;
+	folderName.appendChild(document.createTextNode(unescape(group.folder)));
+
+	var heading = document.createElement("div");
+	heading.className = "folderHeading";
+	heading.appendChild(enqF);
+	heading.appendChild(document.createTextNode(" "));
+	heading.appendChild(folderName);
+
+	divnode.appendChild(heading);
+	divnode.appendChild(listnode);
+    }
 
     var enqAll = dojo.widget.createWidget("Button", {caption: "Enqueue all"}, divnode, "first");
-    dojo.event.connect(enqAll, "onClick", enqueuer_for(results, false));
+    dojo.event.connect(enqAll, "onClick", enqueuer_for(ungrouped_results, false));
 }
 
 function do_search() {

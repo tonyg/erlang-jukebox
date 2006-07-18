@@ -54,20 +54,21 @@ div.history-page {
     margin-top: 1em;
 }
 
-ol {
+ol, ul {
     margin: 0px;
 }
 
 div.history ol {
+    font-size: small;
     list-style-type: none;
     padding: 0px;
 }
 
-ol li {
+div.searchResults {
     font-size: small;
 }
 
-div.now-playing {
+div.now-playing, div.playlistQueue {
     font-size: small;
 }
 
@@ -89,7 +90,7 @@ span.parts span.p1 {
     text-decoration: none;
 }
 
-span.parts abbr {
+abbr {
     border: none;
 }
 
@@ -137,4 +138,16 @@ div.playlistQueue {
 
 a:hover, {
     color: red ! important;
+}
+
+div.folderHeading {
+    display: block;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    border-bottom: solid #ccc 1px;
+}
+
+a.folderLink {
+    color: #888;
+    text-decoration: none;
 }
