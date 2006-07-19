@@ -5,8 +5,15 @@
 -record(session, {username, ip}).
 
 default_name(Session) ->
-    Digits = tuple_to_list(Session#session.ip),
-    lists:flatten(io_lib:format("~p.~p.~p.~p", Digits)).
+    case inet:gethostbyaddr(Session#session.ip) of
+	{ok, Hostent} when element(1, Hostent) == hostent ->
+	    Hostname = element(2, Hostent),
+	    [Shortname | _] = string:tokens(Hostname, "."),
+	    Shortname;
+	_ ->
+	    Digits = tuple_to_list(Session#session.ip),
+	    lists:flatten(io_lib:format("~p.~p.~p.~p", Digits))
+    end.
 
 initial_state(IP) ->
     #session{username = default_name(#session{ip = IP}),
