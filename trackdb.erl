@@ -24,7 +24,7 @@ remove_root(Url) -> gen_server:call(trackdb, {remove_root, Url}).
 rescan_root(Url) -> gen_server:call(trackdb, {rescan_root, Url}).
 update_root(Url, TrackUrls) -> gen_server:call(trackdb, {update_root, Url, TrackUrls}).
 
-search_tracks(Keys) -> gen_server:call(trackdb, {search_tracks, Keys}).
+search_tracks(Keys) -> gen_server:call(trackdb, {search_tracks, Keys}, 10000).
 
 % Server-side
 
