@@ -13,11 +13,15 @@ dojo.require("dojo.event.*");
 
 var jb = new dojo.rpc.JsonService("jukebox.smd");
 
-var refresh_timer = new dojo.animation.Timer(5000);
-refresh_timer.onTick = function () {
+var refresh_timer = null; // will be result of setTimeout below.
+function refresh_timer_tick() {
     jb.get_queue("dummy").addCallback(update_player_status);
     refresh_history();
     refresh_volume();
+    arm_refresh_timer();
+}
+function arm_refresh_timer() {
+    refresh_timer = setTimeout(refresh_timer_tick, 5000);
 }
 
 function refresh_history() {
@@ -318,6 +322,6 @@ function initClient() {
 	jb.whoami('dummy').addCallback(update_username);
     }
 
-    refresh_timer.start();
-    refresh_timer.onTick();
+    arm_refresh_timer();
+    refresh_timer_tick();
 }
