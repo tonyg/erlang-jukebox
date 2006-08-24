@@ -302,7 +302,22 @@ function build_volume_ticks() {
 	link.className = "inactive-volume-tick";
 	link.onclick = volume_setter_for(i);
 	link.innerHTML = "|";
+	link.title = i;
+	link.onmouseover = build_volume_tick_closure_show(i);
+	link.onmouseout = build_volume_tick_closure_hide(i);
 	container.appendChild(link);
+    }
+}
+
+function build_volume_tick_closure_show(vol) {
+    return function() {
+        document.getElementById("volume-indicator").innerHTML = vol + "%";
+    }
+}
+
+function build_volume_tick_closure_hide(vol) {
+    return function() {
+        document.getElementById("volume-indicator").innerHTML = "";
     }
 }
 
