@@ -72,8 +72,19 @@ div.now-playing, div.playlistQueue {
     font-size: small;
 }
 
-div.volume-control {
-    text-align: center;
+table.volume-control {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+td#volume {
+    width: 5em;
+    text-align: right;
+}
+
+td#volume-indicator {
+    width: 5em;
+    text-align: left;
 }
 
 span.parts span.p0 {

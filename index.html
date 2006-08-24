@@ -18,11 +18,13 @@
       <button onclick="do_pause(true)">Pause</button>
       <button onclick="do_pause(false)">Unpause</button>
     </div>
-    <div class="volume-control">
-      <span id="volume-indicator">?</span><br />
-      <span id="volume-ticks"></span><br />
-      <span id="volume">?</span>
-    </div>
+      <table class="volume-control">
+        <tr>
+	  <td id="volume-indicator"></td>
+          <td id="volume-ticks"></td>
+          <td id="volume">?</td>
+	</tr>
+      </table>
     <div class="now-playing">
       <h2 id="statusatom">?</h2>
       <span id="nowplaying">?</span>
