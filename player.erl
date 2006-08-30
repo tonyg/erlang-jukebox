@@ -64,11 +64,12 @@ act_and_reply(State) ->
     {reply, summarise_state(State1), State1}.
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
-    Q1 = case AtTop of
-	     true -> queue:join(Q, State#state.queue);
-	     false -> queue:join(State#state.queue, Q)
+    Q1 = expand_m3us(Q),
+    Q2 = case AtTop of
+	     true -> queue:join(Q1, State#state.queue);
+	     false -> queue:join(State#state.queue, Q1)
 	 end,
-    act_and_reply(State#state{queue=Q1});
+    act_and_reply(State#state{queue=Q2});
 handle_call({dequeue, QEntry}, _From, State) ->
     act_and_reply(State#state{queue=tqueue:dequeue(QEntry, State#state.queue)});
 handle_call({raise, QEntry}, _From, State) ->
@@ -119,3 +120,31 @@ play(Url) ->
 					    (Part) -> Part
 					end, Template),
     execdaemon:run(Program, CommandLine).
+
+
+expand_m3us(List) ->
+    expand_m3us(List, []).
+
+expand_m3us([], Acc) ->
+    lists:reverse(Acc);
+expand_m3us([Url|Tail], Acc) ->
+    Url2 = 
+    case string:right(Url, 4) of
+	".m3u" ->
+	    fetch_m3u(Url);
+	_Else ->
+	    [Url]
+    end,
+    Url3 = lists:reverse(Url2) ++ Acc,
+    expand_m3us(Tail, Url3).
+
+fetch_m3u(Url) ->
+    case http:request(Url) of
+	{ok, {_Status, _Headers, Body}} ->
+	    Entries = string:token(Body, "\n"),
+	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Url, Relative) end,
+	    lists:map(CurriedResolveRelative, Entries);
+	_Else ->
+	    []
+    end.
+    

@@ -1,7 +1,7 @@
 -module(spider).
 
 -export([start/1]).
--export([spider/1, spider/2]).
+-export([spider/1, spider/2, resolve_relative/2]).
 
 start(Sconf) ->
     io:format("Starting spider.~n"),
@@ -79,7 +79,6 @@ avoid_extension(E) -> avoid_extension1(http_util:to_lower(E)).
 
 avoid_extension1(".flac") -> true;
 avoid_extension1(".wav") -> true;
-avoid_extension1(".m3u") -> true;
 avoid_extension1(".rm") -> true;
 avoid_extension1(".ram") -> true;
 avoid_extension1(".wmv") -> true;
