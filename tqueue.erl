@@ -1,7 +1,7 @@
 -module(tqueue).
 -include("tqueue.hrl").
 
--export([from_list/2, entry_to_json/1, entry_from_json/1, to_json/1, from_json/1]).
+-export([from_list/2, entry_to_json/1, entry_from_json/1, to_json/1, from_json/1, tqueue_entry/2]).
 -export([search/2, search/3, chown/2, finish_search/1]).
 -export([raise/2, lower/2, dequeue/2]).
 

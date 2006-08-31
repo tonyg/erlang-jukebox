@@ -1,7 +1,7 @@
 -module(spider).
 
 -export([start/1]).
--export([spider/1, spider/2, resolve_relative/2]).
+-export([spider/1, spider/2, resolve_relative/2, retrieve/1]).
 
 start(Sconf) ->
     io:format("Starting spider.~n"),

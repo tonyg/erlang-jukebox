@@ -18,6 +18,7 @@ start(Sconf) ->
 supports_extension(Extension) ->
     case player_mapping(Extension) of
 	{ok, _CommandLine} -> true;
+	playlist -> true;
 	_ -> false
     end.
 
@@ -25,6 +26,7 @@ player_mapping(E) -> player_mapping1(http_util:to_lower(E)).
 
 player_mapping1(".ogg") -> {ok, ["/usr/bin/env", "ogg123", "-d", "oss", "-q", url]};
 player_mapping1(".mp3") -> {ok, ["/usr/bin/env", "mpg123", "-q", url]};
+player_mapping1(".m3u") -> playlist;
 player_mapping1(_) -> not_playable.
 
 enqueue(Username, AtTop, QUrls) ->
@@ -123,27 +125,28 @@ play(Url) ->
 
 
 expand_m3us(List) ->
-    expand_m3us(List, []).
+    queue:from_list(expand_m3us(queue:to_list(List), [])).
 
 expand_m3us([], Acc) ->
-    lists:reverse(Acc);
-expand_m3us([Url|Tail], Acc) ->
-    Url2 = 
+    lists:flatten(lists:reverse(Acc));
+expand_m3us([TQEntry|Tail], Acc) ->
+    Url = TQEntry#entry.url,
+    TQEntry2 = 
     case string:right(Url, 4) of
 	".m3u" ->
-	    fetch_m3u(Url);
+	    fetch_m3u(Url, TQEntry#entry.username);
 	_Else ->
-	    [Url]
+	    TQEntry
     end,
-    Url3 = lists:reverse(Url2) ++ Acc,
-    expand_m3us(Tail, Url3).
+    expand_m3us(Tail, [TQEntry2|Acc]).
 
-fetch_m3u(Url) ->
-    case http:request(Url) of
-	{ok, {_Status, _Headers, Body}} ->
-	    Entries = string:token(Body, "\n"),
-	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Url, Relative) end,
-	    lists:map(CurriedResolveRelative, Entries);
+fetch_m3u(Url, Username) ->
+    case spider:retrieve(Url) of
+	{ok, "2"++_CodeRest, _Headers, Body} ->
+	    Entries = string:tokens(Body, "\n"),
+	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Url, [$/|Relative]) end,
+	    CorrectUrls = lists:map(CurriedResolveRelative, Entries),
+	    lists:map(fun (U) -> tqueue:tqueue_entry(U, Username) end, CorrectUrls);
 	_Else ->
 	    []
     end.
