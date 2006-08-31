@@ -144,7 +144,8 @@ fetch_m3u(Url, Username) ->
     case spider:retrieve(Url) of
 	{ok, "2"++_CodeRest, _Headers, Body} ->
 	    Entries = lists:filter(fun(E) -> "#" /= string:left(E,1) end, string:tokens(Body, "\n")),
-	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Url, [$/|Relative]) end,
+	    {ok, Base, _Count} = regexp:sub(Url, "/[^/]*$", "/"),
+	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Base, Relative) end,
 	    CorrectUrls = lists:map(CurriedResolveRelative, Entries),
 	    lists:map(fun (U) -> tqueue:tqueue_entry(U, Username) end, CorrectUrls);
 	_Else ->
