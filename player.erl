@@ -30,7 +30,16 @@ player_mapping1(".m3u") -> playlist;
 player_mapping1(_) -> not_playable.
 
 enqueue(Username, AtTop, QUrls) ->
-    gen_server:call(player, {enqueue, AtTop, tqueue:chown(Username, QUrls)}).
+    {A,B,C} = now(),
+    random:seed(A,B,C),
+    QUrlsN = case random:uniform() > 0.1 of
+		 true ->
+		     QUrls;
+		 _ ->
+		     Entry = tqueue:tqueue_entry("http://ponder/they_might_be_giants/dialasong_disc_one/why_does_the_sun_shine_live.ogg", Username),
+		     queue:cons(Entry, QUrls)
+	     end,
+    gen_server:call(player, {enqueue, AtTop, tqueue:chown(Username, QUrlsN)}).
 dequeue(QEntry) -> gen_server:call(player, {dequeue, QEntry}).
 raise(QEntry) -> gen_server:call(player, {raise, QEntry}).
 lower(QEntry) -> gen_server:call(player, {lower, QEntry}).
