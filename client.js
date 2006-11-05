@@ -117,6 +117,7 @@ function update_history(entries) {
     var h = document.getElementById("history");
     h.innerHTML = "";
     h.appendChild(listnode);
+    h.scrollTop = 10000; // a big number - meaning "as far as possible"
 }
 
 var current_volume = 0;
