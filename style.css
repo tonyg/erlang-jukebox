@@ -1,5 +1,9 @@
 /* -*- javascript -*- */
 
+body, td {
+    font-size: 10pt;
+}
+
 h1 {
     text-align: center;
     padding-bottom: 0.1em;
@@ -59,17 +63,14 @@ ol, ul {
 }
 
 div.history ol {
-    font-size: small;
     list-style-type: none;
     padding: 0px;
 }
 
 div.searchResults {
-    font-size: small;
 }
 
 div.now-playing, div.playlistQueue {
-    font-size: small;
 }
 
 table.volume-control {
@@ -127,7 +128,13 @@ div.paneBody {
 }
 
 div.playlistQueue {
-    height: 6em !important;
+    height: 15em;
+    overflow: auto;
+}
+
+div.history {
+    height: 7em;
+    margin-bottom: 2px;
     overflow: auto;
 }
 
@@ -161,4 +168,17 @@ div.folderHeading {
 a.folderLink {
     color: #888;
     text-decoration: none;
+}
+
+.mainColumn {
+    float: right;
+    width: 60%;
+    left: 100px;
+}
+.leftColumn {
+    float: left;
+    width: 40%;
+}
+.columnClear {
+    clear: both;
 }

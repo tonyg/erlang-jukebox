@@ -31,11 +31,13 @@
       <span id="nowplaying">?</span>
     </div>
     <div>
-      <h2>Queue</h2>
-      <div id="statuspanel" class="paneBody playlistQueue"></div>
-    </div>
-    <div>
-      <div>
+      <div class="mainColumn">
+	<h2>Queue</h2>
+	<div id="statuspanel" class="paneBody playlistQueue"></div>
+	<div class="columnClear"></div>
+      </div>
+
+      <div class="leftColumn">
 	<div class="searchpanel">
 	  <h2>Search</h2>
 	  <div class="paneBody">
@@ -55,12 +57,16 @@
 	    </form>
 	  </div>
 	</div>
+	<div class="columnClear"></div>
       </div>
-      <div>
-	<h2>Search Results</h2>
-	<div class="paneBody">
-	  <div id="searchResults" class="searchResults">
-	  </div>
+
+      <div class="columnClear"></div>
+    </div>
+
+    <div>
+      <h2>Search Results</h2>
+      <div class="paneBody">
+	<div id="searchResults" class="searchResults">
 	</div>
       </div>
     </div>
