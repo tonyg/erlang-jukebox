@@ -349,5 +349,7 @@ function initClient() {
 	jb.whoami('dummy').addCallback(update_username);
     }
 
+    document.getElementById('searchtext').focus();
+
     refresh_timer_tick();
 }
