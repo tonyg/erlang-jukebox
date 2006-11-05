@@ -1,13 +1,18 @@
-dojo.require("dojo.rpc.JsonService");
-dojo.require("dojo.animation.Timer");
-
-var config = new dojo.rpc.JsonService("config.smd");
+var config = new JsonService("config.smd");
 
 var refresh_timer = null; // will be result of setTimeout below.
 function refresh_timer_tick() {
-    config.all_roots('dummy').addCallback(update_roots);
-    config.current_rescans('dummy').addCallback(update_rescans);
-    arm_refresh_timer();
+    config.all_roots('dummy')
+    .addCallback(function (roots)
+    {
+	update_roots(roots);
+	config.current_rescans('dummy')
+	.addCallback(function (urls)
+	{
+	    update_rescans(urls);
+	    arm_refresh_timer();
+	});
+    });
 }
 function arm_refresh_timer() {
     refresh_timer = setTimeout(refresh_timer_tick, 5000);
@@ -75,6 +80,5 @@ function update_rescans(urls) {
 }
 
 function initConfigClient() {
-    arm_refresh_timer();
     refresh_timer_tick();
 }

@@ -13,5 +13,5 @@ serve(A, Modulename) ->
     {ok, {IP, _Port}} = inet:peername(A#arg.clisock),
     A2 = A#arg{state = apply(Modulename, initial_state, [IP])},
     %% Workaround to set the MIME type of the response.
-    update_prop(content, fun ({Key, _MimeType, Body}) -> {Key, "text/json", Body} end,
+    update_prop(content, fun ({Key, _MimeType, Body}) -> {Key, "application/json", Body} end,
 		yaws_rpc:handler_session(A2, {Modulename, handler})).

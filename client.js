@@ -1,24 +1,16 @@
-dojo.require("dojo.rpc.JsonService");
-dojo.require("dojo.animation.Timer");
-
-dojo.require("dojo.widget.Manager");
-dojo.require("dojo.widget.Button");
-dojo.require("dojo.widget.LayoutContainer");
-dojo.require("dojo.widget.ContentPane");
-dojo.require("dojo.widget.LinkPane");
-dojo.require("dojo.widget.SplitContainer");
-dojo.require("dojo.widget.TabContainer");
-dojo.require("dojo.widget.TitlePane");
-dojo.require("dojo.event.*");
-
-var jb = new dojo.rpc.JsonService("jukebox.smd");
+var jb = new JsonService("jukebox.smd");
 
 var refresh_timer = null; // will be result of setTimeout below.
 function refresh_timer_tick() {
-    jb.get_queue("dummy").addCallback(update_player_status);
-    refresh_history();
-    refresh_volume();
-    arm_refresh_timer();
+    jb.get_queue("dummy")
+    .addCallback(function (status)
+    {
+	update_player_status(status);
+	refresh_history();
+	refresh_volume();
+	// Only rearm the timer once we know the server's answering requests.
+	arm_refresh_timer();
+    });
 }
 function arm_refresh_timer() {
     refresh_timer = setTimeout(refresh_timer_tick, 5000);
@@ -52,7 +44,7 @@ function update_player_status(status) {
 
     n.innerHTML = "";
     if (status.entry) {
-	n.appendChild(dojo.widget.createWidget("TrackWidget", {track: status.entry}).domNode);
+	n.appendChild(new TrackWidget(status.entry).domNode);
     } else {
 	n.appendChild(document.createElement("br"));
     }
@@ -66,15 +58,16 @@ function update_player_status(status) {
 	itemnode.appendChild(button(raiser_for(track), "up"));
 	itemnode.appendChild(document.createTextNode("/"));
 	itemnode.appendChild(button(lowerer_for(track), "down"));
-	itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
+	itemnode.appendChild(new TrackWidget(track).domNode);
 	listnode.appendChild(itemnode);
     }
 
     d.innerHTML = "";
     d.appendChild(listnode);
 
-    var deqAll = dojo.widget.createWidget("Button", {caption: "Dequeue all"}, d, "first");
-    dojo.event.connect(deqAll, "onClick", do_clear_queue);
+    var deqAll = new ButtonWidget("Dequeue all").domNode;
+    d.insertBefore(deqAll, d.firstChild);
+    Event.observe(deqAll, 'click', do_clear_queue);
 }
 
 function update_history(entries) {
@@ -92,8 +85,7 @@ function update_history(entries) {
 	whatnode.className = "what";
 	whatnode.appendChild(document.createTextNode(entry.what + " "));
 	if (entry.track) {
-	    whatnode.appendChild(dojo.widget.createWidget("TrackWidget",
-							  {track: entry.track}).domNode);
+	    whatnode.appendChild(new TrackWidget(entry.track).domNode);
 	}
 	if (entry.message) {
 	    whatnode.appendChild(document.createTextNode('"' + entry.message + '"'));
@@ -168,44 +160,46 @@ function dequeuer_for(track) {
     return function () { do_dequeue(track); };
 }
 
-dojo.widget.registerWidgetPackage("jukebox");
-dojo.widget.defineWidget("jukebox.TrackWidget", dojo.widget.HtmlWidget,
-{
-    widgetType: "TrackWidget",
+function ButtonWidget(caption) {
+    this.caption = caption;
 
-    track: null,
+    this.domNode = document.createElement("a");
+    this.domNode.className = "action-span";
+    this.domNode.innerHTML = caption;
+}
 
-    buildRendering: function(args, frag) {
-	this.domNode = document.createElement("span");
-	this.domNode.className = "jukeboxTrack";
+function TrackWidget(track) {
+    this.track = track;
 
-	var linknode = document.createElement("a");
-	linknode.className = "trackUrlLink";
-	linknode.href = this.track.url;
-	linknode.appendChild(document.createTextNode("(...)"));
-	this.domNode.appendChild(linknode);
+    this.domNode = document.createElement("span");
+    this.domNode.className = "jukeboxTrack";
 
-	var urlParts = this.track.url.split("/");
+    var linknode = document.createElement("a");
+    linknode.className = "trackUrlLink";
+    linknode.href = this.track.url;
+    linknode.appendChild(document.createTextNode("(...)"));
+    this.domNode.appendChild(linknode);
 
-	var partstr = urlParts[urlParts.length - 1];
-	partstr = unescape(partstr);
-	partstr = partstr.replace(/_/g, ' ');
+    var urlParts = this.track.url.split("/");
 
-	var abbrnode = document.createElement("abbr");
-	abbrnode.title = unescape(this.track.url);
-	abbrnode.appendChild(document.createTextNode(partstr));
-	abbrnode.appendChild(document.createTextNode(" "));
+    var partstr = urlParts[urlParts.length - 1];
+    partstr = unescape(partstr);
+    partstr = partstr.replace(/_/g, ' ');
 
-	var partnode = document.createElement("span");
-	partnode.className = "finalUrlPart";
-	partnode.appendChild(abbrnode);
-	this.domNode.appendChild(partnode);
+    var abbrnode = document.createElement("abbr");
+    abbrnode.title = unescape(this.track.url);
+    abbrnode.appendChild(document.createTextNode(partstr));
+    abbrnode.appendChild(document.createTextNode(" "));
 
-	if (this.track.username) {
-	    this.domNode.appendChild(document.createTextNode(" (" + this.track.username + ")"));
-	}
-    },
-});
+    var partnode = document.createElement("span");
+    partnode.className = "finalUrlPart";
+    partnode.appendChild(abbrnode);
+    this.domNode.appendChild(partnode);
+
+    if (this.track.username) {
+	this.domNode.appendChild(document.createTextNode(" (" + this.track.username + ")"));
+    }
+}
 
 function group_by_folder(results) {
     var groups = [];
@@ -242,7 +236,7 @@ function display_search_results(ungrouped_results, divnode) {
 	    itemnode.appendChild(button(enqueuer_for([track], false), "enqueue"));
 	    itemnode.appendChild(document.createTextNode(" "));
 	    itemnode.appendChild(button(enqueuer_for([track], true), "@top"));
-	    itemnode.appendChild(dojo.widget.createWidget("TrackWidget", {track: track}).domNode);
+	    itemnode.appendChild(new TrackWidget(track).domNode);
 	    listnode.appendChild(itemnode);
 	}
 
@@ -265,8 +259,9 @@ function display_search_results(ungrouped_results, divnode) {
 	divnode.appendChild(listnode);
     }
 
-    var enqAll = dojo.widget.createWidget("Button", {caption: "Enqueue all"}, divnode, "first");
-    dojo.event.connect(enqAll, "onClick", enqueuer_for(ungrouped_results, false));
+    var enqAll = new ButtonWidget("Enqueue all").domNode;
+    divnode.insertBefore(enqAll, divnode.firstChild);
+    Event.observe(enqAll, "click", enqueuer_for(ungrouped_results, false));
 }
 
 function do_search() {
@@ -337,6 +332,5 @@ function initClient() {
 	jb.whoami('dummy').addCallback(update_username);
     }
 
-    arm_refresh_timer();
     refresh_timer_tick();
 }

@@ -1,8 +1,9 @@
 <html>
   <head>
     <title>Erlang Jukebox - Config</title>
-    <script>djConfig = { isDebug: false }</script>
-    <script type="text/javascript" src="dojo/dojo.js"></script>
+    <script type="text/javascript" src="prototype-1.4.0.js"></script>
+    <script type="text/javascript" src="json.js"></script>
+    <script type="text/javascript" src="jsonrpc.js"></script>
     <script type="text/javascript" src="configclient.js"></script>
     <link rel="stylesheet" href="style.css" type="text/css"/>
   </head>
@@ -19,6 +20,6 @@
     </div>
     <br />
     <button onclick="do_snapshot()">Save changes to disk</button>
-    <script>dojo.addOnLoad(initConfigClient);</script>
+    <script>Event.observe(window, 'load', initConfigClient);</script>
   </body>
 </html>

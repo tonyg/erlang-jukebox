@@ -105,7 +105,7 @@ abbr {
     border: none;
 }
 
-h2, div.paneLabel {
+h2 {
     border-bottom: 1px solid black;
     font-size: 14pt;
     font-weight: bold;
