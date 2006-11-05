@@ -74,7 +74,19 @@ function update_player_status(status) {
     Event.observe(deqAll, 'click', do_clear_queue);
 }
 
+function historiesEqual(h1, h2) {
+    // Cheat, using JSON text-equivalence as the equivalence we're after.
+    return JSON.stringify(h1) == JSON.stringify(h2);
+}
+
+var previousHistoryEntries = [];
 function update_history(entries) {
+    if (historiesEqual(entries, previousHistoryEntries)) {
+	return;
+    }
+
+    previousHistoryEntries = entries;
+
     var listnode = document.createElement("ol");
 
     for (var i = entries.length - 1; i >= 0; i--) {
