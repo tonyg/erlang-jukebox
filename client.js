@@ -36,6 +36,10 @@ function button(actionfn, text) {
     return b;
 }
 
+function prependChild(node, child) {
+    return node.insertBefore(child, node.firstChild);
+}
+
 function update_player_status(status) {
     var s = document.getElementById("statusatom");
     var n = document.getElementById("nowplaying");
@@ -66,7 +70,7 @@ function update_player_status(status) {
     d.appendChild(listnode);
 
     var deqAll = new ButtonWidget("Dequeue all").domNode;
-    d.insertBefore(deqAll, d.firstChild);
+    prependChild(d, deqAll);
     Event.observe(deqAll, 'click', do_clear_queue);
 }
 
@@ -260,7 +264,7 @@ function display_search_results(ungrouped_results, divnode) {
     }
 
     var enqAll = new ButtonWidget("Enqueue all").domNode;
-    divnode.insertBefore(enqAll, divnode.firstChild);
+    prependChild(divnode, enqAll);
     Event.observe(enqAll, "click", enqueuer_for(ungrouped_results, false));
 }
 
