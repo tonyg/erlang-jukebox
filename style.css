@@ -105,10 +105,6 @@ span.parts span.p1 {
 .trackUsername {
     color: grey;
     font-size: 66%;
-    margin-top: 0.5em;
-    position: absolute;
-    top: auto;
-    right: 1.5em;
 }
 
 abbr {
