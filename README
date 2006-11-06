@@ -1,0 +1,7 @@
+This is a jukebox web application, written in Erlang and
+Javascript. Please see the copyright notice and copying conditions in
+the file "COPYING" (summary: MIT license).
+
+See the "doc" directory for documentation.
+
+-- Tony Garnock-Jones, LShift Ltd., November 2006.
