@@ -208,3 +208,9 @@ a.folderLink {
     background-position: 0 3px;
     text-indent: -9000px;
 }
+
+.enqueueButton {
+    width: auto;
+    text-indent: 10px;
+    padding: 0px;
+}
