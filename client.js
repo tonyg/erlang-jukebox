@@ -28,12 +28,25 @@ function update_username(jbResp) {
     document.getElementById('username').value = jbResp[0];
 }
 
-function button(actionfn, text) {
-    var b = document.createElement("a");
+function button(actionfn, text, maybeClass, maybeTitle) {
+    var b = document.createElement("button");
     b.className = "action-span";
+    if (maybeClass) { b.className += " " + maybeClass; }
+    if (maybeTitle) { b.title = maybeTitle; }
     b.onclick = actionfn;
     b.innerHTML = text;
     return b;
+}
+
+function textSpan(text, maybeClass) {
+    var n = document.createElement("span");
+    if (maybeClass) n.className = maybeClass;
+    n.appendChild(document.createTextNode(text));
+    return n;
+}
+
+function spacerText(text) {
+    return textSpan(text, "spacerText");
 }
 
 function prependChild(node, child) {
@@ -57,11 +70,17 @@ function update_player_status(status) {
     for (var i = 0; i < status.queue.length; i++) {
 	var track = status.queue[i];
 	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(dequeuer_for(track), "dequeue"));
-	itemnode.appendChild(document.createTextNode(" "));
-	itemnode.appendChild(button(raiser_for(track), "up"));
-	itemnode.appendChild(document.createTextNode("/"));
-	itemnode.appendChild(button(lowerer_for(track), "down"));
+	itemnode.appendChild(button(dequeuer_for(track), "dequeue",
+				    "imageButton dequeueButton",
+				    "Dequeue track"));
+	itemnode.appendChild(spacerText(" "));
+	itemnode.appendChild(button(raiser_for(track), "up",
+				    "imageButton upButton",
+				    "Move track earlier in queue"));
+	itemnode.appendChild(spacerText("/"));
+	itemnode.appendChild(button(lowerer_for(track), "down",
+				    "imageButton downButton",
+				    "Move track later in queue"));
 	itemnode.appendChild(new TrackWidget(track).domNode);
 	listnode.appendChild(itemnode);
     }
@@ -214,7 +233,7 @@ function TrackWidget(track) {
     this.domNode.appendChild(partnode);
 
     if (this.track.username) {
-	this.domNode.appendChild(document.createTextNode(" (" + this.track.username + ")"));
+	this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
     }
 }
 
@@ -250,9 +269,13 @@ function display_search_results(ungrouped_results, divnode) {
 	for (var i = 0; i < group.results.length; i++) {
 	    var track = group.results[i];
 	    var itemnode = document.createElement("li");
-	    itemnode.appendChild(button(enqueuer_for([track], false), "enqueue"));
-	    itemnode.appendChild(document.createTextNode(" "));
-	    itemnode.appendChild(button(enqueuer_for([track], true), "@top"));
+	    itemnode.appendChild(button(enqueuer_for([track], false), "enqueue",
+					"imageButton enqueueButton",
+					"Append track to queue"));
+	    itemnode.appendChild(spacerText(" "));
+	    itemnode.appendChild(button(enqueuer_for([track], true), "@top",
+					"imageButton atTopButton",
+					"Prepend track to queue"));
 	    itemnode.appendChild(new TrackWidget(track).domNode);
 	    listnode.appendChild(itemnode);
 	}

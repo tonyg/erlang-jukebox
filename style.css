@@ -102,18 +102,27 @@ span.parts span.p1 {
     text-decoration: none;
 }
 
+.trackUsername {
+    color: grey;
+    font-size: 66%;
+    margin-top: 0.5em;
+    position: absolute;
+    top: auto;
+    right: 1.5em;
+}
+
 abbr {
     border: none;
 }
 
 h2 {
     border-bottom: 1px solid black;
-    font-size: 14pt;
+    font-size: 12pt;
     font-weight: bold;
     margin-bottom: 1em;
     margin-top: 0.5em;
+    background-color: #ddf;
 /*
-    background-color: #88f;
     color: white;
     border: solid black 1px;
     padding: 0.3em;
@@ -181,4 +190,24 @@ a.folderLink {
 }
 .columnClear {
     clear: both;
+}
+
+.spacerText {
+    display: none;
+}
+
+.playlistQueue ol { list-style-type: none; padding: 0px; padding-left: 0.5em; }
+.searchResults ul { list-style-type: none; padding: 0px; padding-left: 0.5em; }
+
+.dequeueButton { background: url(icons/smallX.png) no-repeat; margin-right: 5px; }
+.upButton { background: url(icons/moveU.png) no-repeat; }
+.downButton { background: url(icons/moveD.png) no-repeat; }
+.enqueueButton { background: url(icons/atBot.png) no-repeat; margin-right: 5px; }
+.atTopButton { background: url(icons/atTop.png) no-repeat; }
+.imageButton {
+    width: 11px;
+    border: 0px;
+    overflow: hidden;
+    background-position: 0 3px;
+    text-indent: -9000px;
 }
