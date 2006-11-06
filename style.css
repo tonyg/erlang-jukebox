@@ -155,6 +155,7 @@ div.history {
 .active-volume-tick {
     color: red;
     cursor: pointer;
+    background: pink;
 }
 
 .action-span {
