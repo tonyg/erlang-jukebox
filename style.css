@@ -7,7 +7,7 @@ body, td {
 h1 {
     text-align: center;
     padding-bottom: 0.1em;
-    background: red;
+    background: #98FB98;
     border-bottom: 4px solid black;
     margin: 0px;
 }
@@ -128,6 +128,10 @@ h2 {
 */
 }
 
+h3 {
+    font-size: 10pt;
+}
+
 div.paneBody {
     padding: 0.3em;
 }
@@ -213,4 +217,8 @@ a.folderLink {
     width: auto;
     text-indent: 10px;
     padding: 0px;
+}
+
+dd {
+    margin-bottom: 1em;
 }

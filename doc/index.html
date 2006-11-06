@@ -1,0 +1,276 @@
+<html>
+  <head>
+    <title>An AJAX Erlang Jukebox</title>
+    <link rel="stylesheet" href="../style.css" type="text/css"/>
+  </head>
+  <body>
+    <h1>An AJAX Erlang Jukebox</h1>
+
+    <h2>Installation and Configuration</h2>
+
+    <p>
+      Very briefly,
+    </p>
+
+    <ul>
+      <li>Install <a href="http://www.erlang.org/">Erlang</a>.</li>
+      <li>Install <a href="http://yaws.hyber.org/">Yaws</a>.</li>
+      <li>
+	<p>
+	  Make sure your copies of <a
+	  href="http://www.mpg123.de/">mpg123</a> and <a
+	  href="http://downloads.xiph.org/releases/vorbis/">ogg123</a>
+	  (the latter from the vorbis-tools package) work
+	  properly.
+	</p>
+	<p>
+	  <b>Note:</b> <a
+	  href="http://mpg321.sourceforge.net/">mpg321</a> is not the
+	  same as mpg123, and has poor support for HTTP streaming of
+	  MP3 files - if you're on Debian Linux, try using <a
+	  href="http://www.google.com/search?q=update-alternatives">update-alternatives</a>
+	  to select the real mpg123 if you're having problems with MP3
+	  sound quality.
+	</p>
+      </li>
+      <li>
+	<p>
+	  If you want support for a volume control, compile up
+	  <code>hmix</code> (a copy of which can be found in the <a
+	  href="../util/">../util/</a> directory) and put it on the
+	  path so that it's accessible to the running application
+	  server.
+	</p>
+      </li>
+      <li>
+	<p>
+	  Type <code>make</code>. If all goes well, try <code>make
+	  run</code>, which will start the application in an
+	  interactive Erlang shell. Running <code>make daemon</code>
+	  will start the application running in the background.
+	</p>
+      </li>
+    </ul>
+
+    <p>
+      The application is usually accessible on port 8888 (see <a
+      href="../yaws.conf">yaws.conf</a> if you want to change this),
+      so once it's running, you should see the main user interface at
+    </p>
+
+    <p align="center">
+      <code><a href="http://localhost:8888/">http://localhost:8888/</a></code>
+    </p>
+
+    <p>
+      The first thing you'll need to do is add a root URL for the
+      application to spider. Visit the configuration interface at
+    </p>
+
+    <p align="center">
+      <code><a
+      href="http://localhost:8888/config.html">http://localhost:8888/config.html</a></code>
+    </p>
+
+    <p>
+      Enter a URL
+      (e.g. <code>http://mymachine/path/to/my/iTunes%20Folder/</code>)
+      in the field next to the "Add root" button, and click on the
+      button. The system will start scanning the directory hierarchy
+      beneath the URL you entered.
+    </p>
+
+    <p>
+      When it's done, the URL will appear in the "All roots" section
+      of the display. Click the "Save changes to disk" button to cause
+      the server to save a snapshot of the current index to the disk.
+    </p>
+
+    <h2>Code Overview</h2>
+
+    <h3>The Music Server and Track Database</h3>
+
+    <dl>
+      <dt>main.erl</dt>
+      <dd>
+	This is the entry point for the whole server-side program. It
+	starts the spider service, the track database, the player
+	service, the volume control service, and the main history/chat
+	recorder. It's referred to by the "start_mod" setting in <a
+	href="../yaws.conf">yaws.conf</a>, so that it's started at
+	Yaws boot time.
+      </dd>
+
+      <dt>execdaemon.c, execdaemon.erl</dt>
+      <dd>
+	These programs fill a gap in Erlang's support for POSIX
+	process control and signalling. After having a good go at
+	using its built-in mechanisms for spawning other Unix
+	processes, I decided I wasn't getting the control I needed, so
+	hacked together this external controller program to act as a
+	buffer between Erlang and the Unix world. The execdaemon.c
+	program speaks a simple command language over stdin/stdout,
+	discards the output of its child processes, and provides an
+	interface to two functions: <code>execv(3)</code> and
+	<code>kill(2)</code>. The execdaemon.erl module provides an
+	Erlang wrapper around execdaemon.c's functionality.
+      </dd>
+
+      <dt>history.erl</dt>
+      <dd>
+	This module &mdash; all 30 lines of it! &mdash; implements a
+	simple logging or chat service. It's used in the jukebox as a
+	simple IRC-like AJAX chat panel, allowing Jukebox users to
+	talk to each other via the Jukebox UI.
+      </dd>
+
+      <dt>player.erl</dt>
+      <dd>
+	This module maps filename extensions to player commands (such
+	as mpg123, ogg123, etc.), and uses execdaemon.erl to manage an
+	external player process. It also manages the main queue of
+	tracks to play, supporting operations such as enqueueing a
+	track or a <code>.m3u</code> playlist, moving a track around
+	in the queue, removing a track from the queue, skipping the
+	remainder of the currently-playing track, and pausing and
+	unpausing the current player process.
+      </dd>
+
+      <dt>spider.erl</dt>
+      <dd>
+	This module recursively explores directory hierarchies exposed
+	as HTML. A regular expression matching 'href="..."' extracts
+	sub-URLs from each retrieved page. Leaf URLs are accumulated
+	and returned to the caller, and Non-leaf (subdirectory) URLs
+	are retrieved and processed in turn.
+      </dd>
+
+      <dt>tqueue.erl, tqueue.hrl</dt>
+      <dd>
+	This module implements a "track queue" data structure, built
+	upon Erlang's library <code>queue</code> module. Each entry in
+	a track queue consists of an ID, a track URL, and optionally a
+	username associated with the entry. The track queue structure,
+	and its contained track structures, are the core structures
+	used in communication between the user interface and the
+	server side of the application.
+      </dd>
+
+      <dt>trackdb.erl</dt>
+      <dd>
+	This module manages the database of all discovered tracks,
+	using spider.erl to scan the root URLs. It provides procedures
+	for listing, adding, removing and rescanning roots, as well as
+	for searching the database.
+      </dd>
+
+      <dt>volume.erl</dt>
+      <dd>
+	This module uses the external program <code>hmix</code> to
+	query and adjust mixer settings.
+      </dd>
+    </dl>
+
+    <h3>The Main User-Interface</h3>
+
+    <p>
+      The user interface is constructed around static HTML pages which
+      load static Javascript files from the server. The javascript
+      files in turn load <a
+      href="http://manual.dojotoolkit.org/WikiHome/DojoDotBook/Book9">Simple
+      Method Description (SMD) service description files</a> from the
+      server, constructing Javascript client proxy objects for each
+      service. Methods invoked on proxy objects cause <a
+      href="http://json-rpc.org/wd/JSON-RPC-1-1-WD-20060807.html">JSON-RPC</a>
+      requests to be sent across the network.
+    </p>
+
+    <dl>
+      <dt>index.html</dt>
+      <dd>
+	Static HTML for the main Jukebox user interface. Loads <a
+	href="http://prototype.conio.net/">prototype</a>, <a
+	href="../json.js">json.js</a> and <a
+	href="../jsonrpc.js">jsonrpc.js</a> support libraries before
+	loading <a href="../client.js">client.js</a>.
+      </dd>
+
+      <dt>client.js</dt>
+      <dd>
+	This file contains the main body of the user interface
+	code. The static HTML hooks into the code in this file, both
+	via event handlers on particular HTML elements and via the
+	registration of <code>initClient()</code> as a window onLoad
+	callback. When client.js is loaded, the first thing it does is
+	retrieve jukebox.smd, which it uses to build a proxy to the
+	(non-configuration) server-side functionality of the
+	application.
+      </dd>
+
+      <dt>json.js</dt>
+      <dd>
+	This is a slightly modified copy of an old JSON implementation
+	from <a href="http://json.org/">json.org</a>.
+      </dd>
+
+      <dt>jsonrpc.js</dt>
+      <dd>
+	This is a tiny, simple layer atop json.js and <a
+	href="http://prototype.conio.net/">prototype</a> that parses
+	SMD files, generating Javascript proxy objects for JSON-RPC
+	services.
+      </dd>
+
+      <dt>jukebox.smd, jukebox.yaws, jukeboxsession.erl</dt>
+      <dd>
+	These three files together define a single JSON-RPC
+	service. The SMD file defines the available methods and some
+	other metadata, and contains the URL to the .yaws file; the
+	.yaws file provides the binding between an HTTP request and an
+	Erlang backing module; and jukeboxsession.erl implements the
+	methods listed in the SMD file, as well as providing code for
+	managing user sessions.
+      </dd>
+
+      <dt>jrpc.erl</dt>
+      <dd>
+	This is a small, simple Erlang module used as a wrapper around
+	core Yaws JSON-RPC functionality. It exists solely to set the
+	correct <code>application/json</code> MIME type on the HTTP
+	response.
+      </dd>
+    </dl>
+
+    <h3>The Configuration Tool</h3>
+
+    <p>
+      The configuration tool is similar in construction to the main
+      user interface, but is much simpler. It provides an interface to
+      adding, removing and rescanning root URLs (with the
+      functionality implemented by trackdb.erl, v.s.) and to saving a
+      snapshot of the current in-memory database to the disk.
+    </p>
+
+    <dl>
+      <dt>config.html</dt>
+      <dd>
+	Static HTML for the configuration interface. Similar to
+	index.html, except loads configclient.js instead of client.js.
+      </dd>
+
+      <dt>configclient.js</dt>
+      <dd>
+	This file contains the main body of the configuration tool
+	code. Similar in structure to client.js, but based around
+	config.smd instead of jukebox.smd.
+      </dd>
+
+      <dt>config.smd, config.yaws, configsession.erl</dt>
+      <dd>
+	JSON-RPC service definition and implementation for the
+	configuration service.
+      </dd>
+    </dl>
+
+  </body>
+</html>
