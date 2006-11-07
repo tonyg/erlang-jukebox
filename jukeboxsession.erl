@@ -52,7 +52,7 @@ handler(_, {call, login, [NewName]}, Session) ->
     NewSession = Session#session{username = NewName},
     if
 	Session#session.username /= NewName ->
-	    log(NewSession, login, []);
+	    ok; %% log(NewSession, login, []);
 	true -> ok
     end,
     {true, 0, NewSession, {response, r_user_id(NewSession)}};
