@@ -39,7 +39,7 @@
 	<div class="searchpanel">
 	  <h2>Search</h2>
 	  <div class="paneBody">
-	    <form>
+	    <form onsubmit="do_search(); return false;">
 	      <input id="searchtext" name="searchtext" type="text" value="" />
 	      <button onclick="do_search(); return false;">Search</button>
 	    </form>
@@ -66,7 +66,7 @@
 	  <div class="paneBody">
 	    <div class="history" id="history">
 	    </div>
-	    <form>
+	    <form onsubmit="send_chat(); return false;">
 	      <input id="chatMessage" name="chatMessage" type="text" value="" />
 	      <button onclick="send_chat(); return false;">Chat</button>
 	    </form>
