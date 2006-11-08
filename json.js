@@ -28,6 +28,7 @@ CHANGELOG
 
  - 23 June 2006: changes by tonyg@kcbbs.gen.nz for Rhino JS support
  - 24 June 2006: changes by tonyg@kcbbs.gen.nz for better array-detection
+ - 8 November 2006: tonyg: conditionalise Java-specific code
 
 */
 
@@ -38,6 +39,16 @@ var JSON = {
 
     javaSerializers: {
 	"java.lang.Object": function (arg) { return JSON.stringify(String(arg)); }
+    },
+
+    rhinoSupport: false, /* set to true to enable Java JSON serialization */
+    isJavaObject: function (o) {
+	if (this.rhinoSupport) {
+	    if (o instanceof java.lang.Object) {
+		return true;
+	    }
+	}
+	return false;
     },
 
     findJavaSerializer: function (o) {
@@ -74,7 +85,7 @@ var JSON = {
                     return '[' + s + ']';
 		} else if (typeof arg.toJsonString != 'undefined') {
 		    return arg.toJsonString();
-		} else if (arg instanceof java.lang.Object) {
+		} else if (this.isJavaObject(arg)) {
 		    v = this.findJavaSerializer(arg);
 		    if (v != null) {
 			return v(arg);
