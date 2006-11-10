@@ -164,7 +164,7 @@ div.history {
     text-decoration: underline;
 }
 
-a:hover, {
+a:hover {
     color: red ! important;
 }
 
