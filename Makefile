@@ -13,6 +13,9 @@ run: run_prereqs
 daemon: run_prereqs
 	/opt/yaws/bin/yaws --conf yaws.conf -D
 
+stop-daemon:
+	/opt/yaws/bin/yaws --stop
+
 clean: cleanlog
 	rm -f $(TARGETS)
 	make -C execdaemon clean
