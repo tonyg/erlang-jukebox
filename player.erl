@@ -143,7 +143,7 @@ expand_m3us([TQEntry|Tail], Acc) ->
 fetch_m3u(Url, Username) ->
     case spider:retrieve(Url) of
 	{ok, "2"++_CodeRest, _Headers, Body} ->
-	    Entries = lists:filter(fun(E) -> "#" /= string:left(E,1) end, string:tokens(Body, "\n")),
+	    Entries = lists:filter(fun(E) -> "#" /= string:left(E,1) end, string:tokens(Body, "\r\n")),
 	    {ok, Base, _Count} = regexp:sub(Url, "/[^/]*$", "/"),
 	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Base, Relative) end,
 	    CorrectUrls = lists:map(CurriedResolveRelative, Entries),
