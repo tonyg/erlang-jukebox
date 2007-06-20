@@ -5,7 +5,7 @@
 -export([start/1]).
 -export([supports_extension/1]).
 -export([enqueue/3, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
--export([init/1, handle_call/3, handle_info/2]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 %---------------------------------------------------------------------------
 
@@ -43,9 +43,6 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 -record(state, {status, queue}).
 
-init(_Args) ->
-    {ok, #state{status = idle, queue = queue:new()}}.
-
 act_on(State=#state{status = idle, queue = TQ}) ->
     case queue:out(TQ) of
 	{empty, _} -> State;
@@ -64,6 +61,48 @@ summarise_state(State) ->
 act_and_reply(State) ->
     State1 = act_on(State),
     {reply, summarise_state(State1), State1}.
+
+
+play(Url) ->
+    Extension = filename:extension(Url),
+    {ok, Template} = player_mapping(Extension),
+    [Program | CommandLine] = lists:map(fun
+					    (url) -> Url;
+					    (Part) -> Part
+					end, Template),
+    execdaemon:run(Program, CommandLine).
+
+
+expand_m3us(List) ->
+    queue:from_list(expand_m3us(queue:to_list(List), [])).
+
+expand_m3us([], Acc) ->
+    lists:flatten(lists:reverse(Acc));
+expand_m3us([TQEntry|Tail], Acc) ->
+    Url = TQEntry#entry.url,
+    TQEntry2 = 
+    case string:right(Url, 4) of
+	".m3u" ->
+	    fetch_m3u(Url, TQEntry#entry.username);
+	_Else ->
+	    TQEntry
+    end,
+    expand_m3us(Tail, [TQEntry2|Acc]).
+
+fetch_m3u(Url, Username) ->
+    case spider:retrieve(Url) of
+	{ok, "2"++_CodeRest, _Headers, Body} ->
+	    Entries = lists:filter(fun(E) -> "#" /= string:left(E,1) end, string:tokens(Body, "\r\n")),
+	    {ok, Base, _Count} = regexp:sub(Url, "/[^/]*$", "/"),
+	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Base, Relative) end,
+	    CorrectUrls = lists:map(CurriedResolveRelative, Entries),
+	    lists:map(fun (U) -> tqueue:tqueue_entry(U, Username) end, CorrectUrls);
+	_Else ->
+	    []
+    end.
+    
+init(_Args) ->
+    {ok, #state{status = idle, queue = queue:new()}}.
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
     Q1 = expand_m3us(Q),
@@ -105,6 +144,9 @@ handle_call({pause, On}, _From, State) ->
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 
+handle_cast(_Message, State) ->
+    {noreply, State}.
+
 handle_info({execdaemon_event, PlayerPid, _Code, _Aux}, State) ->
     execdaemon:terminate(PlayerPid),
     {noreply, State};
@@ -114,41 +156,8 @@ handle_info(Msg, State) ->
     io:format("Subprocess: ~p~n", Msg),
     {noreply, State}.
 
-play(Url) ->
-    Extension = filename:extension(Url),
-    {ok, Template} = player_mapping(Extension),
-    [Program | CommandLine] = lists:map(fun
-					    (url) -> Url;
-					    (Part) -> Part
-					end, Template),
-    execdaemon:run(Program, CommandLine).
+terminate(_Reason, _State) ->
+    ok.
 
-
-expand_m3us(List) ->
-    queue:from_list(expand_m3us(queue:to_list(List), [])).
-
-expand_m3us([], Acc) ->
-    lists:flatten(lists:reverse(Acc));
-expand_m3us([TQEntry|Tail], Acc) ->
-    Url = TQEntry#entry.url,
-    TQEntry2 = 
-    case string:right(Url, 4) of
-	".m3u" ->
-	    fetch_m3u(Url, TQEntry#entry.username);
-	_Else ->
-	    TQEntry
-    end,
-    expand_m3us(Tail, [TQEntry2|Acc]).
-
-fetch_m3u(Url, Username) ->
-    case spider:retrieve(Url) of
-	{ok, "2"++_CodeRest, _Headers, Body} ->
-	    Entries = lists:filter(fun(E) -> "#" /= string:left(E,1) end, string:tokens(Body, "\r\n")),
-	    {ok, Base, _Count} = regexp:sub(Url, "/[^/]*$", "/"),
-	    CurriedResolveRelative = fun(Relative) -> spider:resolve_relative(Base, Relative) end,
-	    CorrectUrls = lists:map(CurriedResolveRelative, Entries),
-	    lists:map(fun (U) -> tqueue:tqueue_entry(U, Username) end, CorrectUrls);
-	_Else ->
-	    []
-    end.
-    
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.

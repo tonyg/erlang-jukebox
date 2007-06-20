@@ -7,7 +7,7 @@
 -export([all_roots/0, current_rescans/0, remove_root/1, rescan_root/1, update_root/2]).
 -export([search_tracks/1]).
 
--export([init/1, handle_call/3]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 % Client interface
 
@@ -35,6 +35,13 @@ upgrade_state(State=#v1{}) ->
 upgrade_state(State) -> %% unlabeled version.
     dict:fetch_keys(State), %% ensure it's a dictionary
     upgrade_state(#v1{roots=State}).
+
+searcher(From, Keys, Roots) ->
+    Matches = dict:fold(fun (_Url, Q, Acc) -> tqueue:search(Keys, Q, Acc) end, [], Roots),
+    gen_server:reply(From, tqueue:finish_search(Matches)).
+
+rescanner(Url) ->
+    update_root(Url, tqueue:from_list(spider:spider(Url), null)).
 
 init(_Args) ->
     case file:read_file("ejukebox.db") of
@@ -65,10 +72,14 @@ handle_call({search_tracks, Keys}, From, S={_, State}) ->
     spawn(fun () -> searcher(From, Keys, State#v1.roots) end),
     {noreply, S}.
 
+handle_cast(_Message, State) ->
+    {noreply, State}.
 
-searcher(From, Keys, Roots) ->
-    Matches = dict:fold(fun (_Url, Q, Acc) -> tqueue:search(Keys, Q, Acc) end, [], Roots),
-    gen_server:reply(From, tqueue:finish_search(Matches)).
+handle_info(_Info, State) ->
+    {noreply, State}.
 
-rescanner(Url) ->
-    update_root(Url, tqueue:from_list(spider:spider(Url), null)).
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
