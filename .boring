@@ -25,5 +25,6 @@
 \#
 \.cvsignore$
 ^scratch($|/)
-^execdaemon/execdaemon$
+^priv/execdaemon/execdaemon$
 \.beam$
+^priv/server_root/logs/(access|error|security)_log$
