@@ -22,7 +22,13 @@ all: $(TARGETS)
 run_prereqs: all
 
 run: run_prereqs
-	$(ERL_CMD) -s jukebox
+	$(ERL_CMD) -sname jukebox -s jukebox
+
+daemon: run_prereqs
+	$(ERL_CMD) -detached -sname jukebox -s jukebox
+
+stop:
+	erl_call -a 'jukebox stop_and_halt []' -sname jukebox
 
 clean: cleanlog
 	rm -f $(TARGETS)
