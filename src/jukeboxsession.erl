@@ -1,99 +1,139 @@
 -module(jukeboxsession).
+-behaviour(gen_server).
+
 -include("tqueue.hrl").
--export([initial_state/1, handler/3]).
 
--record(session, {username, ip}).
+-export([start_link/0]).
+-export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 
-default_name(Session) ->
-    case inet:gethostbyaddr(Session#session.ip) of
+start_link() ->
+    {ok, Pid} = gen_server:start_link(?MODULE, [], []),
+    mod_jsonrpc:register_service
+      (Pid,
+       mod_jsonrpc:service(<<"jukebox">>,
+                           <<"urn:uuid:e97721d2-6439-4981-8527-e1f82edd0023">>,
+                           <<"1.0.0">>,
+                           [{<<"get_caller_hostname">>, []},
+			    {<<"search">>, [{"keys", arr}]},
+			    {<<"enqueue">>, [{"who", str},
+					     {"entrylist", arr},
+					     {"attop", bit}]},
+			    {<<"dequeue">>, [{"who", str},
+					     {"entry", obj}]},
+			    {<<"raise">>, [{"entry", obj}]},
+			    {<<"lower">>, [{"entry", obj}]},
+			    {<<"get_queue">>, []},
+			    {<<"skip">>, [{"who", str}]},
+			    {<<"pause">>, [{"pause", bit}]},
+			    {<<"clear_queue">>, [{"who", str}]},
+			    {<<"get_history">>, [{"entrycount", num}]},
+			    {<<"chat">>, [{"who", str},
+					  {"message", str}]},
+			    {<<"get_volume">>, []},
+			    {<<"set_volume">>, [{"newvol", num}]}])),
+    {ok, Pid}.
+
+default_name(Ip4Addr) ->
+    case inet:gethostbyaddr(Ip4Addr) of
 	{ok, Hostent} when element(1, Hostent) == hostent ->
 	    Hostname = element(2, Hostent),
 	    [Shortname | _] = string:tokens(Hostname, "."),
 	    Shortname;
 	_ ->
-	    Digits = tuple_to_list(Session#session.ip),
-	    lists:flatten(io_lib:format("~p.~p.~p.~p", Digits))
+	    if
+		is_tuple(Ip4Addr) ->
+		    Digits = tuple_to_list(Ip4Addr),
+		    lists:flatten(io_lib:format("~p.~p.~p.~p", Digits));
+		is_list(Ip4Addr) ->
+		    Ip4Addr;
+		true ->
+		    "unknown"
+	    end
     end.
 
-initial_state(IP) ->
-    #session{username = default_name(#session{ip = IP}),
-	     ip = IP}.
-
-user_id(Session) ->
-    {Session#session.username, Session#session.ip}.
-
-r_user_id(Session) ->
-    {U,IP} = user_id(Session),
-    {array,[U,{array, tuple_to_list(IP)}]}.
-
 summary_to_json({idle, Q}) ->
-    {struct, [{status, "idle"},
-	      {entry, null},
-	      {queue, tqueue:to_json(Q)}]};
+    {obj, [{"status", <<"idle">>},
+	   {"entry", null},
+	   {"queue", tqueue:to_json(Q)}]};
 summary_to_json({{Status, Entry}, Q}) ->
-    {struct, [{status, atom_to_list(Status)},
-	      {entry, tqueue:entry_to_json(Entry)},
-	      {queue, tqueue:to_json(Q)}]}.
+    {obj, [{"status", list_to_binary(atom_to_list(Status))},
+	   {"entry", tqueue:entry_to_json(Entry)},
+	   {"queue", tqueue:to_json(Q)}]}.
 
 history_to_json(H) ->
-    {array, lists:map(fun ({Who, {What, Entry}}) ->
-			      {struct, [{who, Who},
-					{what, atom_to_list(What)}
-					| Entry]}
-		      end, H)}.
+    lists:map(fun ({Who, {What, Entry}}) ->
+		      {obj, [{"who", list_to_binary(Who)},
+			     {"what", list_to_binary(atom_to_list(What))}
+			     | Entry]}
+	      end, H).
 
-log(Session, What, JsonFields) ->
-    history:record(history, Session#session.username, {What, JsonFields}).
+log(Who, What, JsonFields) ->
+    history:record(history, Who, {What, JsonFields}).
 
-%% handler(State which we mostly ignore, Request = {call, Method, Arglist}, Session)
-handler(State, Request, undefined) ->
-    handler(State, Request, State);
-handler(_, {call, login, [NewName]}, Session) ->
-    NewSession = Session#session{username = NewName},
-    if
-	Session#session.username /= NewName ->
-	    ok; %% log(NewSession, login, []);
-	true -> ok
-    end,
-    {true, 0, NewSession, {response, r_user_id(NewSession)}};
-handler(_, {call, whoami, _}, Session) ->
-    {false, {response, r_user_id(Session)}};
-handler(_, {call, logout, _}, Session) ->
-    log(Session, logout, []),
-    NewSession = Session#session{username = default_name(Session)},
-    {true, 0, NewSession, {response, r_user_id(NewSession)}};
-handler(_, {call, search, [{array, Keys}]}, _Session) ->
-    Tracks = trackdb:search_tracks(Keys),
-    {false, {response, tqueue:to_json(Tracks)}};
-handler(_, {call, enqueue, [EntryList, AtTop]}, Session) ->
+init(_Args) ->
+    {ok, no_state}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    State.
+
+handle_call({jsonrpc, <<"get_caller_hostname">>, ModData, []}, _From, State) ->
+    {init_data, {_PortNumber, Ip4Addr}, _Resolve} = element(2, ModData),
+    Name = default_name(Ip4Addr),
+    {reply, {result, list_to_binary(Name)}, State};
+
+handle_call({jsonrpc, <<"search">>, _ModData, [Keys]}, _From, State) ->
+    Tracks = trackdb:search_tracks(lists:map(fun binary_to_list/1, Keys)),
+    {reply, {result, tqueue:to_json(Tracks)}, State};
+
+handle_call({jsonrpc, <<"enqueue">>, _ModData, [Who, EntryList, AtTop]}, _From, State) ->
     Q = tqueue:from_json(EntryList),
-    player:enqueue(Session#session.username, AtTop, Q),
-    {false, {response, summary_to_json(player:get_queue())}};
-handler(_, {call, dequeue, [Entry]}, _Session) ->
+    player:enqueue(binary_to_list(Who), AtTop, Q),
+    {reply, {result, summary_to_json(player:get_queue())}, State};
+
+handle_call({jsonrpc, <<"dequeue">>, _ModData, [_Who, Entry]}, _From, State) ->
     player:dequeue(tqueue:entry_from_json(Entry)),
-    {false, {response, summary_to_json(player:get_queue())}};
-handler(_, {call, raise, [Entry]}, _Session) ->
+    {reply, {result, summary_to_json(player:get_queue())}, State};
+
+handle_call({jsonrpc, <<"raise">>, _ModData, [Entry]}, _From, State) ->
     player:raise(tqueue:entry_from_json(Entry)),
-    {false, {response, summary_to_json(player:get_queue())}};
-handler(_, {call, lower, [Entry]}, _Session) ->
+    {reply, {result, summary_to_json(player:get_queue())}, State};
+
+handle_call({jsonrpc, <<"lower">>, _ModData, [Entry]}, _From, State) ->
     player:lower(tqueue:entry_from_json(Entry)),
-    {false, {response, summary_to_json(player:get_queue())}};
-handler(_, {call, get_queue, _}, _) ->
-    {false, {response, summary_to_json(player:get_queue())}};
-handler(_, {call, skip, _}, Session) ->
+    {reply, {result, summary_to_json(player:get_queue())}, State};
+
+handle_call({jsonrpc, <<"get_queue">>, _ModData, []}, _From, State) ->
+    {reply, {result, summary_to_json(player:get_queue())}, State};
+
+handle_call({jsonrpc, <<"skip">>, _ModData, [Who]}, _From, State) ->
     {ok, SkippedTrack, NewState} = player:skip(),
-    log(Session, skip, [{track, tqueue:entry_to_json(SkippedTrack)}]),
-    {false, {response, summary_to_json(NewState)}};
-handler(_, {call, pause, [P]}, _) ->
-    {false, {response, summary_to_json(player:pause(P))}};
-handler(_, {call, clear_queue, _}, _) ->
-    {false, {response, summary_to_json(player:clear_queue())}};
-handler(_, {call, get_history, [N]}, _) ->
-    {false, {response, history_to_json(history:retrieve(history, N))}};
-handler(_, {call, chat, [Message]}, Session) ->
-    log(Session, says, [{message, Message}]),
-    {false, {response, true}};
-handler(_, {call, get_volume, _}, _) ->
-    {false, {response, {struct, [{volume, volume:get()}]}}};
-handler(_, {call, set_volume, [NewVol]}, _) ->
-    {false, {response, {struct, [{volume, volume:set(NewVol)}]}}}.
+    log(binary_to_list(Who), skip, [{track, tqueue:entry_to_json(SkippedTrack)}]),
+    {reply, {result, summary_to_json(NewState)}, State};
+
+handle_call({jsonrpc, <<"pause">>, _ModData, [Pause]}, _From, State) ->
+    {reply, {result, summary_to_json(player:pause(Pause))}, State};
+
+handle_call({jsonrpc, <<"clear_queue">>, _ModData, [_Who]}, _From, State) ->
+    {reply, {result, summary_to_json(player:clear_queue())}, State};
+
+handle_call({jsonrpc, <<"get_history">>, _ModData, [EntryCount]}, _From, State) ->
+    {reply, {result, history_to_json(history:retrieve(history, EntryCount))}, State};
+
+handle_call({jsonrpc, <<"chat">>, _ModData, [Who, Message]}, _From, State) ->
+    log(binary_to_list(Who), says, [{message, Message}]),
+    {reply, {result, true}, State};
+
+handle_call({jsonrpc, <<"get_volume">>, _ModData, []}, _From, State) ->
+    {reply, {result, {obj, [{"volume", volume:get()}]}}, State};
+
+handle_call({jsonrpc, <<"set_volume">>, _ModData, [NewVol]}, _From, State) ->
+    {reply, {result, {obj, [{"volume", volume:set(NewVol)}]}}, State}.
+
+handle_cast(_Request, State) ->
+    {noreply, State}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.

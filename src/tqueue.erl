@@ -11,27 +11,35 @@ tqueue_entry(Url, Username) ->
 from_list(Urls, Username) ->
     queue:from_list(lists:map(fun (U) -> tqueue_entry(U, Username) end, Urls)).
 
+to_binary(X) when is_list(X) ->
+    list_to_binary(X);
+to_binary(X) ->
+    X.
+
+to_list(X) when is_binary(X) ->
+    binary_to_list(X);
+to_list(X) ->
+    X.
+
 entry_to_json(null) -> null;
 entry_to_json(#entry{id = {Node, Stamp}, url = Url, username = Username}) ->
-    {struct, [{id, {array, [atom_to_list(Node),
-			    {array, tuple_to_list(Stamp)}]}},
-	      {url, Url},
-	      {username, Username}]}.
+    {obj, [{"id", [list_to_binary(atom_to_list(Node)), tuple_to_list(Stamp)]},
+	   {"url", list_to_binary(Url)},
+	   {"username", to_binary(Username)}]}.
 
 entry_from_json(null) -> null;
-entry_from_json(J) ->
-    {array, [NodeStr, {array, StampList}]} = json:obj_fetch(id, J),
-    Url = json:obj_fetch(url, J),
-    Username = json:obj_fetch(username, J),
-    #entry{id = {list_to_atom(NodeStr), list_to_tuple(StampList)},
-	   url = Url,
-	   username = Username}.
+entry_from_json({obj, J}) ->
+    {value, {_, [NodeBin, StampList]}} = lists:keysearch("id", 1, J),
+    {value, {_, UrlBin}} = lists:keysearch("url", 1, J),
+    {value, {_, UsernameBin}} = lists:keysearch("username", 1, J),
+    #entry{id = {list_to_atom(binary_to_list(NodeBin)), list_to_tuple(StampList)},
+	   url = binary_to_list(UrlBin),
+	   username = to_list(UsernameBin)}.
 
 to_json(Q) ->
-    {array, lists:map(fun entry_to_json/1, queue:to_list(Q))}.
+    lists:map(fun entry_to_json/1, queue:to_list(Q)).
 
-from_json({}) -> from_json({array, []}); %% correct for json.erl flaw
-from_json({array, Entries}) ->
+from_json(Entries) ->
     queue:from_list(lists:map(fun entry_from_json/1, Entries)).
 
 search(Keys, Q) ->

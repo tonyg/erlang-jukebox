@@ -1,8 +1,9 @@
-var jb = new JsonService("jukebox.smd");
+var jb = null;
+var currentUsername = "unknown";
 
 var refresh_timer = null; // will be result of setTimeout below.
 function refresh_timer_tick() {
-    jb.get_queue("dummy")
+    jb.get_queue()
     .addCallback(function (status)
     {
 	update_player_status(status);
@@ -21,11 +22,12 @@ function refresh_history() {
 }
 
 function refresh_volume() {
-    jb.get_volume('dummy').addCallback(update_volume);
+    jb.get_volume().addCallback(update_volume);
 }
 
-function update_username(jbResp) {
-    document.getElementById('username').value = jbResp[0];
+function update_username(newName) {
+    currentUsername = newName;
+    document.getElementById('username').value = newName;
 }
 
 function button(actionfn, text, maybeClass, maybeTitle) {
@@ -149,19 +151,15 @@ function update_volume(result) {
 }
 
 function change_username() {
-    jb.login(document.getElementById('username').value).addCallback(update_username);
-}
-
-function do_logout() {
-    jb.logout('dummy').addCallback(update_username);
+    update_username(document.getElementById('username').value);
 }
 
 function do_skip() {
-    jb.skip('dummy').addCallback(update_player_status);
+    jb.skip(currentUsername).addCallback(update_player_status);
 }
 
 function do_clear_queue() {
-    jb.clear_queue('dummy').addCallback(update_player_status);
+    jb.clear_queue(currentUsername).addCallback(update_player_status);
 }
 
 function do_pause(shouldPause) {
@@ -169,7 +167,7 @@ function do_pause(shouldPause) {
 }
 
 function do_enqueue(trackEntries, atTop) {
-    jb.enqueue(trackEntries, atTop).addCallback(update_player_status);
+    jb.enqueue(currentUsername, trackEntries, atTop).addCallback(update_player_status);
 }
 
 function enqueuer_for(trackEntries, atTop) {
@@ -189,7 +187,7 @@ function lowerer_for(track) {
 }
 
 function do_dequeue(track) {
-    jb.dequeue(track).addCallback(update_player_status);
+    jb.dequeue(currentUsername, track).addCallback(update_player_status);
 }
 
 function dequeuer_for(track) {
@@ -319,7 +317,7 @@ function do_search() {
 
 function send_chat() {
     var n = document.getElementById("chatMessage");
-    jb.chat(n.value).addCallback(refresh_history);
+    jb.chat(currentUsername, n.value).addCallback(refresh_history);
     n.value = "";
 }
 
@@ -357,22 +355,24 @@ function build_volume_tick_closure_hide(vol) {
 }
 
 function initClient() {
+    jb = new JsonRpcService("/rpc/jukebox", onReady);
     build_volume_ticks();
-
-    var username = document.location.search.match(/username=([^&]+)/);
-    if (username) {
-	username = username[1].replace(/\+/g, " ");
-	username = unescape(username);
-    }
-
-    if (username) {
-	document.getElementById('username').value = username;
-	change_username();
-    } else {
-	jb.whoami('dummy').addCallback(update_username);
-    }
-
     document.getElementById('searchtext').focus();
 
-    refresh_timer_tick();
+    function onReady() {
+	var username = document.location.search.match(/username=([^&]+)/);
+	if (username) {
+	    username = username[1].replace(/\+/g, " ");
+	    username = unescape(username);
+	}
+
+	if (username) {
+	    document.getElementById('username').value = username;
+	    change_username();
+	} else {
+	    jb.get_caller_hostname().addCallback(update_username);
+	}
+
+	refresh_timer_tick();
+    }
 }
