@@ -1,3 +1,0 @@
-<erl>
-out(A) -> jrpc:serve(A, jukeboxsession).
-</erl>
