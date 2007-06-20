@@ -1,13 +1,12 @@
 -module(history).
 -behaviour(gen_server).
 
--export([start/2]).
+-export([start_link/2]).
 -export([retrieve/2, record/3, format/4, reset/1]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
-start(Name, Maxlength) ->
-    io:format("Starting history ~p (maxlength ~p).~n", [Name, Maxlength]),
+start_link(Name, Maxlength) ->
     gen_server:start_link({local, Name}, history, [Maxlength], []).
 
 retrieve(Name, N) -> gen_server:call(Name, {retrieve, N}).

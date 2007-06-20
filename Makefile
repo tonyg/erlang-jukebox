@@ -21,6 +21,9 @@ all: $(TARGETS)
 
 run_prereqs: all
 
+run: run_prereqs
+	$(ERL_CMD) -s jukebox
+
 clean: cleanlog
 	rm -f $(TARGETS)
 	make -C priv/execdaemon clean

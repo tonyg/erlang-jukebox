@@ -1,11 +1,10 @@
 -module(spider).
 
--export([start/1]).
+-export([start_link/0]).
 -export([spider/1, spider/2, resolve_relative/2, retrieve/1]).
 
-start(Sconf) ->
-    io:format("Starting spider.~n"),
-    ibrowse:start().
+start_link() ->
+    ibrowse:start_link().
 
 spider(Url) -> spider(Url, false).
 

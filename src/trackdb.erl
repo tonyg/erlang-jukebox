@@ -1,7 +1,7 @@
 -module(trackdb).
 -behaviour(gen_server).
 
--export([start/1]).
+-export([start_link/0]).
 
 -export([snapshot/0]).
 -export([all_roots/0, current_rescans/0, remove_root/1, rescan_root/1, update_root/2]).
@@ -13,8 +13,7 @@
 
 %% new_guid() ->  {node(), erlang:now()}.
 
-start(Sconf) ->
-    io:format("Starting trackdb.~n"),
+start_link() ->
     gen_server:start_link({local, trackdb}, trackdb, [], []).
 
 snapshot() -> gen_server:call(trackdb, snapshot).

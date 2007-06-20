@@ -2,15 +2,14 @@
 -include("tqueue.hrl").
 -behaviour(gen_server).
 
--export([start/1]).
+-export([start_link/0]).
 -export([supports_extension/1]).
 -export([enqueue/3, dequeue/1, raise/1, lower/1, get_queue/0, skip/0, pause/1, clear_queue/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 %---------------------------------------------------------------------------
 
-start(Sconf) ->
-    io:format("Starting player.~n"),
+start_link() ->
     gen_server:start_link({local, player}, player, [], []).
 
 %---------------------------------------------------------------------------
