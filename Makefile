@@ -1,29 +1,34 @@
-SOURCES=$(wildcard *.erl)
-TARGETS=$(patsubst %.erl,%.beam,$(SOURCES))
+SOURCE_DIR=src
+EBIN_DIR=ebin
+INCLUDE_DIR=include
+
+SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
+INCLUDES=$(wildcard $(INCLUDE_DIR)/*.hrl)
+TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam,$(SOURCES))
+
+IBROWSE_DIR=priv/ibrowse-1.0
+IBROWSE_SOURCE_DIR=$(IBROWSE_DIR)/src
+IBROWSE_EBIN_DIR=$(IBROWSE_DIR)/ebin
+
+ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v +debug_info
+ERLC=erlc $(ERLC_OPTS)
+
+ERL_CMD=erl -pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
 
 all: $(TARGETS)
-	make -C execdaemon
-	make -C ibrowse-1.0/src
+	make -C priv/execdaemon
+	make -C $(IBROWSE_SOURCE_DIR)
 
 run_prereqs: all
 
-run: run_prereqs
-	/opt/yaws/bin/yaws --conf yaws.conf -i
-
-daemon: run_prereqs
-	/opt/yaws/bin/yaws --conf yaws.conf -D
-
-stop-daemon:
-	/opt/yaws/bin/yaws --stop
-
 clean: cleanlog
 	rm -f $(TARGETS)
-	make -C execdaemon clean
-	make -C ibrowse-1.0/src clean
+	make -C priv/execdaemon clean
+	make -C $(IBROWSE_SOURCE_DIR) clean
 
 cleanlog:
 	rm -f auth.log report.log
 	rm -f *.access
 
-%.beam: %.erl
-	erlc -I /opt/yaws/lib/yaws/include $<
+$(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDES)
+	$(ERLC) $<
