@@ -22,5 +22,7 @@ init([]) ->
 	   {player, {player, start_link, []}, transient, 5, worker, [player]},
 	   {volume, {volume, start_link, []}, transient, 5, worker, [volume]},
 
+	   {configsession, {configsession, start_link, []}, transient, 5, worker, [configsession]},
+
 	   {history, {history, start_link, [history, 100]},
 	    transient, 5, worker, [history]}]}}.

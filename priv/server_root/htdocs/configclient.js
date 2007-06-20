@@ -1,12 +1,12 @@
-var config = new JsonService("config.smd");
+var config = null;
 
 var refresh_timer = null; // will be result of setTimeout below.
 function refresh_timer_tick() {
-    config.all_roots('dummy')
+    config.all_roots()
     .addCallback(function (roots)
     {
 	update_roots(roots);
-	config.current_rescans('dummy')
+	config.current_rescans()
 	.addCallback(function (urls)
 	{
 	    update_rescans(urls);
@@ -33,7 +33,7 @@ function do_add_root() {
 }
 
 function do_snapshot() {
-    config.snapshot("dummy");
+    config.snapshot();
 }
 
 function rescanner_for(url) {
@@ -80,5 +80,5 @@ function update_rescans(urls) {
 }
 
 function initConfigClient() {
-    refresh_timer_tick();
+    config = new JsonRpcService("/rpc/config", refresh_timer_tick);
 }

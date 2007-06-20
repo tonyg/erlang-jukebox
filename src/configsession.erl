@@ -1,18 +1,59 @@
 -module(configsession).
--export([initial_state/1, handler/3]).
+-behaviour(gen_server).
 
-initial_state(_IP) -> ok.
+-export([start_link/0]).
+-export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
 
-handler(_, {call, current_rescans, _}, _) ->
-    {false, {response, {array, trackdb:current_rescans()}}};
-handler(_, {call, all_roots, _}, _) ->
-    {false, {response, {array, trackdb:all_roots()}}};
-handler(_, {call, remove_root, [Url]}, _) ->
-    trackdb:remove_root(Url),
-    {false, {response, {array, trackdb:all_roots()}}};
-handler(_, {call, rescan_root, [Url]}, _) ->
-    trackdb:rescan_root(Url),
-    {false, {response, {array, trackdb:current_rescans()}}};
-handler(_, {call, snapshot, _}, _) ->
+start_link() ->
+    {ok, Pid} = gen_server:start_link(?MODULE, [], []),
+    mod_jsonrpc:register_service
+      (Pid,
+       mod_jsonrpc:service(<<"config">>,
+                           <<"urn:uuid:a4b32870-fac5-4d7f-bacc-187e77db928c">>,
+                           <<"1.0.0">>,
+                           [{<<"current_rescans">>, []},
+                            {<<"all_roots">>, []},
+                            {<<"remove_root">>, [{"url", str}]},
+                            {<<"rescan_root">>, [{"url", str}]},
+                            {<<"snapshot">>, []}])),
+    {ok, Pid}.
+
+%---------------------------------------------------------------------------
+
+lists_to_binaries([]) ->
+    [];
+lists_to_binaries([H|Rest]) ->
+    [list_to_binary(H) | lists_to_binaries(Rest)].
+
+init(_Args) ->
+    {ok, no_state}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    State.
+
+handle_call({jsonrpc, <<"current_rescans">>, _ModData, []}, _From, State) ->
+    {reply, {result, trackdb:current_rescans()}, State};
+
+handle_call({jsonrpc, <<"all_roots">>, _ModData, []}, _From, State) ->
+    {reply, {result, lists_to_binaries(trackdb:all_roots())}, State};
+
+handle_call({jsonrpc, <<"remove_root">>, _ModData, [Url]}, _From, State) ->
+    trackdb:remove_root(binary_to_list(Url)),
+    {reply, {result, lists_to_binaries(trackdb:all_roots())}, State};
+
+handle_call({jsonrpc, <<"rescan_root">>, _ModData, [Url]}, _From, State) ->
+    trackdb:rescan_root(binary_to_list(Url)),
+    {reply, {result, lists_to_binaries(trackdb:current_rescans())}, State};
+
+handle_call({jsonrpc, <<"snapshot">>, _ModData, []}, _From, State) ->
     trackdb:snapshot(),
-    {false, {response, true}}.
+    {reply, {result, true}, State}.
+
+handle_cast(_Request, State) ->
+    {noreply, State}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.
