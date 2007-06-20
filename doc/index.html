@@ -14,7 +14,6 @@
 
     <ul>
       <li>Install <a href="http://www.erlang.org/">Erlang</a>.</li>
-      <li>Install <a href="http://yaws.hyber.org/">Yaws</a>.</li>
       <li>
 	<p>
 	  Make sure your copies of <a
@@ -47,15 +46,18 @@
 	  Type <code>make</code>. If all goes well, try <code>make
 	  run</code>, which will start the application in an
 	  interactive Erlang shell. Running <code>make daemon</code>
-	  will start the application running in the background.
+	  will start the application running in the
+	  background. Running <code>make stop</code> will shut down a
+	  running jukebox.
 	</p>
       </li>
     </ul>
 
     <p>
       The application is usually accessible on port 8888 (see <a
-      href="../yaws.conf">yaws.conf</a> if you want to change this),
-      so once it's running, you should see the main user interface at
+      href="../priv/server_root/conf/httpd.conf">httpd.conf</a> if you
+      want to change this), so once it's running, you should see the
+      main user interface at
     </p>
 
     <p align="center">
@@ -91,14 +93,12 @@
     <h3>The Music Server and Track Database</h3>
 
     <dl>
-      <dt>main.erl</dt>
+      <dt>jukebox.erl, jukebox_supervisor.erl</dt>
       <dd>
 	This is the entry point for the whole server-side program. It
-	starts the spider service, the track database, the player
-	service, the volume control service, and the main history/chat
-	recorder. It's referred to by the "start_mod" setting in <a
-	href="../yaws.conf">yaws.conf</a>, so that it's started at
-	Yaws boot time.
+	starts the HTTP daemon, spider service, the track database,
+	the player service, the volume control service, and the main
+	history/chat recorder.
       </dd>
 
       <dt>execdaemon.c, execdaemon.erl</dt>
@@ -118,7 +118,7 @@
 
       <dt>history.erl</dt>
       <dd>
-	This module &mdash; all 30 lines of it! &mdash; implements a
+	This module &mdash; all 41 lines of it! &mdash; implements a
 	simple logging or chat service. It's used in the jukebox as a
 	simple IRC-like AJAX chat panel, allowing Jukebox users to
 	talk to each other via the Jukebox UI.
@@ -176,13 +176,8 @@
     <p>
       The user interface is constructed around static HTML pages which
       load static Javascript files from the server. The javascript
-      files in turn load <a
-      href="http://manual.dojotoolkit.org/WikiHome/DojoDotBook/Book9">Simple
-      Method Description (SMD) service description files</a> from the
-      server, constructing Javascript client proxy objects for each
-      service. Methods invoked on proxy objects cause <a
-      href="http://json-rpc.org/wd/JSON-RPC-1-1-WD-20060807.html">JSON-RPC</a>
-      requests to be sent across the network.
+      files in turn access JSON-RPC services on the server using
+      XmlHttpRequest.
     </p>
 
     <dl>
@@ -202,9 +197,8 @@
 	via event handlers on particular HTML elements and via the
 	registration of <code>initClient()</code> as a window onLoad
 	callback. When client.js is loaded, the first thing it does is
-	retrieve jukebox.smd, which it uses to build a proxy to the
-	(non-configuration) server-side functionality of the
-	application.
+	build a proxy to the (non-configuration) server-side
+	functionality of the application.
       </dd>
 
       <dt>json.js</dt>
@@ -216,28 +210,14 @@
       <dt>jsonrpc.js</dt>
       <dd>
 	This is a tiny, simple layer atop json.js and <a
-	href="http://prototype.conio.net/">prototype</a> that parses
-	SMD files, generating Javascript proxy objects for JSON-RPC
-	services.
+	href="http://prototype.conio.net/">prototype</a> that accesses
+	JSON-RPC services.
       </dd>
 
-      <dt>jukebox.smd, jukebox.yaws, jukeboxsession.erl</dt>
+      <dt>jukeboxsession.erl</dt>
       <dd>
-	These three files together define a single JSON-RPC
-	service. The SMD file defines the available methods and some
-	other metadata, and contains the URL to the .yaws file; the
-	.yaws file provides the binding between an HTTP request and an
-	Erlang backing module; and jukeboxsession.erl implements the
-	methods listed in the SMD file, as well as providing code for
-	managing user sessions.
-      </dd>
-
-      <dt>jrpc.erl</dt>
-      <dd>
-	This is a small, simple Erlang module used as a wrapper around
-	core Yaws JSON-RPC functionality. It exists solely to set the
-	correct <code>application/json</code> MIME type on the HTTP
-	response.
+	This module defines a single JSON-RPC service. It implements
+	the core API to the jukebox application.
       </dd>
     </dl>
 
@@ -261,11 +241,11 @@
       <dt>configclient.js</dt>
       <dd>
 	This file contains the main body of the configuration tool
-	code. Similar in structure to client.js, but based around
-	config.smd instead of jukebox.smd.
+	code. Similar in structure to client.js, but based around a
+	difference JSON-RPC service.
       </dd>
 
-      <dt>config.smd, config.yaws, configsession.erl</dt>
+      <dt>configsession.erl</dt>
       <dd>
 	JSON-RPC service definition and implementation for the
 	configuration service.
