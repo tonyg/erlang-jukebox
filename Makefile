@@ -13,7 +13,11 @@ IBROWSE_EBIN_DIR=$(IBROWSE_DIR)/ebin
 ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v +debug_info
 ERLC=erlc $(ERLC_OPTS)
 
-ERL_CMD=erl -pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
+ERL_CMD=erl \
+	-boot start_sasl \
+	-sasl errlog_type error \
+	+W w \
+	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
 
 all: $(TARGETS)
 	make -C priv/execdaemon
@@ -25,7 +29,7 @@ run: run_prereqs
 	$(ERL_CMD) -sname jukebox -s jukebox
 
 daemon: run_prereqs
-	$(ERL_CMD) -detached -sname jukebox -s jukebox
+	$(ERL_CMD) -detached -sname jukebox -s jukebox >>jukebox.log 2>&1
 
 stop:
 	erl_call -a 'jukebox stop_and_halt []' -sname jukebox
