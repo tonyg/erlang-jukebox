@@ -364,6 +364,7 @@ function initClient() {
     document.getElementById('searchtext').focus();
 
     function onReady() {
+	jb.options.timeout = 30000; /* milliseconds */
 	var username = document.location.search.match(/username=([^&]+)/);
 	if (username) {
 	    username = username[1].replace(/\+/g, " ");
