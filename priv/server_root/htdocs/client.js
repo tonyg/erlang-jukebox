@@ -309,9 +309,13 @@ function do_search() {
     var p = document.getElementById("searchResults");
     p.innerHTML = "Searching...";
 
-    jb.search(keys).addCallback(function (results) {
-				    display_search_results(results, p);
-				});
+    jb.search(keys)
+    .addCallback(function (results) {
+		     display_search_results(results, p);
+		 })
+    .addErrorCallback(function (err) {
+			  p.innerHTML = JSON.stringify(err);
+		      });
     return false;
 }
 
