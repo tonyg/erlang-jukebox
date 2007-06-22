@@ -15,6 +15,7 @@ start_link() ->
                            <<"1.0.0">>,
                            [{<<"get_caller_hostname">>, []},
 			    {<<"search">>, [{"keys", arr}]},
+			    {<<"randomtracks">>, [{"approxcount", num}]},
 			    {<<"enqueue">>, [{"who", str},
 					     {"entrylist", arr},
 					     {"attop", bit}]},
@@ -86,6 +87,10 @@ handle_call({jsonrpc, <<"get_caller_hostname">>, ModData, []}, _From, State) ->
 
 handle_call({jsonrpc, <<"search">>, _ModData, [Keys]}, _From, State) ->
     Tracks = trackdb:search_tracks(lists:map(fun binary_to_list/1, Keys)),
+    {reply, {result, tqueue:to_json(Tracks)}, State};
+
+handle_call({jsonrpc, <<"randomtracks">>, _ModData, [ApproxCount]}, _From, State) ->
+    Tracks = trackdb:random_tracks(ApproxCount),
     {reply, {result, tqueue:to_json(Tracks)}, State};
 
 handle_call({jsonrpc, <<"enqueue">>, _ModData, [Who, EntryList, AtTop]}, _From, State) ->

@@ -319,6 +319,20 @@ function do_search() {
     return false;
 }
 
+function do_random(count) {
+    var p = document.getElementById("searchResults");
+    p.innerHTML = "Finding approximately " + count + " random tracks...";
+
+    jb.randomtracks(count)
+    .addCallback(function (results) {
+		     display_search_results(results, p);
+		 })
+    .addErrorCallback(function (err) {
+			  p.innerHTML = JSON.stringify(err);
+		      });
+    return false;
+}
+
 function send_chat() {
     var n = document.getElementById("chatMessage");
     jb.chat(currentUsername, n.value).addCallback(refresh_history);
