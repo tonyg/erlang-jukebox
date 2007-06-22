@@ -222,3 +222,7 @@ a.folderLink {
 dd {
     margin-bottom: 1em;
 }
+
+span.rootCount {
+    font-family: mono;
+}

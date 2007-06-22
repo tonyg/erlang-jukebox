@@ -25,6 +25,12 @@ lists_to_binaries([]) ->
 lists_to_binaries([H|Rest]) ->
     [list_to_binary(H) | lists_to_binaries(Rest)].
 
+roots_to_json([]) ->
+    [];
+roots_to_json([{Url,QLen}|Rest]) ->
+    [{obj, [{"url", list_to_binary(Url)},
+	    {"count", QLen}]} | roots_to_json(Rest)].
+
 init(_Args) ->
     {ok, no_state}.
 
@@ -38,11 +44,11 @@ handle_call({jsonrpc, <<"current_rescans">>, _ModData, []}, _From, State) ->
     {reply, {result, trackdb:current_rescans()}, State};
 
 handle_call({jsonrpc, <<"all_roots">>, _ModData, []}, _From, State) ->
-    {reply, {result, lists_to_binaries(trackdb:all_roots())}, State};
+    {reply, {result, roots_to_json(trackdb:all_roots())}, State};
 
 handle_call({jsonrpc, <<"remove_root">>, _ModData, [Url]}, _From, State) ->
     trackdb:remove_root(binary_to_list(Url)),
-    {reply, {result, lists_to_binaries(trackdb:all_roots())}, State};
+    {reply, {result, roots_to_json(trackdb:all_roots())}, State};
 
 handle_call({jsonrpc, <<"rescan_root">>, _ModData, [Url]}, _From, State) ->
     trackdb:rescan_root(binary_to_list(Url)),

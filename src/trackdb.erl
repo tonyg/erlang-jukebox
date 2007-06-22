@@ -77,7 +77,10 @@ handle_call(snapshot, _From, S={_, State}) ->
     {reply, file:write_file("ejukebox.db", term_to_binary(State)), S};
 
 handle_call(all_roots, _From, S={_, State}) ->
-    {reply, dict:fetch_keys(State#v2.roots), S};
+    {reply,
+     lists:map(fun ({Url, {QLen, _Q}}) -> {Url, QLen} end,
+	       dict:to_list(State#v2.roots)),
+     S};
 
 handle_call(current_rescans, _From, S={Rescans, _}) ->
     {reply, Rescans, S};

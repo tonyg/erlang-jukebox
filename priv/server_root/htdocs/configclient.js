@@ -48,15 +48,40 @@ function deleter_for(url) {
     };
 }
 
-function update_roots(urls) {
+function link_for(url) {
+    var b = document.createElement("a");
+    b.href = url;
+    b.appendChild(document.createTextNode(url));
+    return b;
+}
+
+function span_for(klass, node) {
+    var s = document.createElement("span");
+    s.className = klass;
+    s.appendChild(node);
+    return s;
+}
+
+function padLeft(totalWidth, s) {
+    while (s.length < totalWidth) {
+	s = "_" + s;
+    }
+    return s;
+}
+
+function update_roots(roots) {
     var listnode = document.createElement("ul");
-    for (var i = 0; i < urls.length; i++) {
-	var root = urls[i];
+    for (var i = 0; i < roots.length; i++) {
+	var root = roots[i];
 	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(rescanner_for(root), "rescan"));
+	itemnode.appendChild(button(rescanner_for(root.url), "rescan"));
 	itemnode.appendChild(document.createTextNode(" "));
-	itemnode.appendChild(button(deleter_for(root), "delete"));
-	itemnode.appendChild(document.createTextNode(" " + root));
+	itemnode.appendChild(button(deleter_for(root.url), "delete"));
+	itemnode.appendChild(document.createTextNode(" ("));
+	itemnode.appendChild(span_for("rootCount",
+				      document.createTextNode(padLeft(6, "" + root.count))));
+	itemnode.appendChild(document.createTextNode(" tracks) "));
+	itemnode.appendChild(link_for(root.url));
 	listnode.appendChild(itemnode);
     }
 
