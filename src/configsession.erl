@@ -41,7 +41,7 @@ code_change(_OldVsn, State, _Extra) ->
     State.
 
 handle_call({jsonrpc, <<"current_rescans">>, _ModData, []}, _From, State) ->
-    {reply, {result, trackdb:current_rescans()}, State};
+    {reply, {result, lists_to_binaries(trackdb:current_rescans())}, State};
 
 handle_call({jsonrpc, <<"all_roots">>, _ModData, []}, _From, State) ->
     {reply, {result, roots_to_json(trackdb:all_roots())}, State};
