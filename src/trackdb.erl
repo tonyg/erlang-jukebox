@@ -70,7 +70,7 @@ rescanner(Url) ->
 init(_Args) ->
     case file:read_file("ejukebox.db") of
 	{ok, State} -> {ok, {[], upgrade_state(binary_to_term(State))}};
-	{error, enoent} -> {ok, {[], #v1{roots = dict:new()}}}
+	{error, enoent} -> {ok, {[], #v2{roots = dict:new()}}}
     end.
 
 handle_call(snapshot, _From, S={_, State}) ->
