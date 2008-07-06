@@ -94,10 +94,15 @@ url_path(Url) ->
 	N -> string:substr(Url, 1, N - 1)
     end.
 
+is_current_or_parent_link("." ++ _) -> true;
+is_current_or_parent_link(RelUrl) ->
+    string:str(RelUrl, "/./") /= 0 orelse
+	string:str(RelUrl, "/../") /= 0.
+
 process_result_url(BaseUrl, HtmlEncodedUrl, {Work, Results}) ->
     RelUrl = html_decode(HtmlEncodedUrl),
-    case lists:nth(1, RelUrl) of
-	$. ->
+    case is_current_or_parent_link(RelUrl) of
+	true ->
 	    {Work, Results};
         _ ->
 	    Url = resolve_relative(BaseUrl, RelUrl),
