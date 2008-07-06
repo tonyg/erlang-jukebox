@@ -18,6 +18,6 @@
 		trackdb,
 		player,
 		volume]},
-  {applications, [kernel, stdlib]},
+  {applications, [kernel, stdlib, crypto]},
   {mod, {jukebox, []}},
   {env, []}]}.

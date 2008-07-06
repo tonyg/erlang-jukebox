@@ -17,6 +17,7 @@ init([]) ->
 	   {httpd, {httpd, start_link, ["priv/server_root/conf/httpd.conf"]},
 	    transient, infinity, supervisor, [httpd_instance_sup]},
 
+	   {urlcache, {urlcache, start_link, []}, permanent, 5, worker, [urlcache]},
 	   {spider, {spider, start_link, []}, permanent, 5, worker, [ibrowse]},
 	   {trackdb, {trackdb, start_link, []}, transient, 5, worker, [trackdb]},
 	   {player, {player, start_link, []}, transient, 5, worker, [player]},

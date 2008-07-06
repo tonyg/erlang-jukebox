@@ -26,10 +26,10 @@ all: $(TARGETS)
 run_prereqs: all
 
 run: run_prereqs
-	$(ERL_CMD) -sname jukebox -s jukebox
+	$(ERL_CMD) -sname jukebox -s crypto -s jukebox
 
 daemon: run_prereqs
-	$(ERL_CMD) -detached -sname jukebox -s jukebox >>jukebox.log 2>&1
+	$(ERL_CMD) -detached -sname jukebox -s crypto -s jukebox >>jukebox.log 2>&1
 
 stop:
 	erl_call -a 'jukebox stop_and_halt []' -sname jukebox
