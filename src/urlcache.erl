@@ -50,8 +50,9 @@ download_and_cache(CachePid, Filename, Url) ->
 	true -> ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
-	    {ok, "2"++_CodeRest, _, BodyList} = spider:retrieve(Url),
-	    ok = file:write_file(PartFilename, BodyList),
+	    CurlPath = os:find_executable("curl"),
+	    CurlPid = execdaemon:run(CurlPath, ["-C", "-", "-o", PartFilename, Url]),
+	    execdaemon:terminate(CurlPid),
 	    ok = file:rename(PartFilename, Filename)
     end,
     gen_server:cast(CachePid, {download_done, Url}),
