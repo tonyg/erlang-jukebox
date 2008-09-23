@@ -53,10 +53,12 @@ default_name(IpAddr) ->
     end.
 
 summary_to_json({StateSymbol, Q, Entry, IsPaused}) ->
+    CurrentDownloads = urlcache:current_downloads(),
     {obj, [{"status", list_to_binary(atom_to_list(StateSymbol))},
 	   {"entry", tqueue:entry_to_json(Entry)},
 	   {"queue", tqueue:to_json(Q)},
-	   {"paused", IsPaused}]}.
+	   {"paused", IsPaused},
+	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
 
 history_to_json(H) ->
     lists:map(fun ({Who, {What, Entry}}) ->
