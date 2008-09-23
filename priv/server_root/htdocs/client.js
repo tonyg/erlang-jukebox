@@ -70,6 +70,11 @@ function update_player_status(status) {
 	n.appendChild(document.createElement("br"));
     }
 
+    var currentDownloads = {};
+    for (var i = 0; i < status.downloads.length; i++) {
+	currentDownloads[status.downloads[i]] = 1;
+    }
+
     var listnode = document.createElement("ol");
     for (var i = 0; i < status.queue.length; i++) {
 	var track = status.queue[i];
@@ -86,6 +91,9 @@ function update_player_status(status) {
 				    "imageButton downButton",
 				    "Move track later in queue"));
 	itemnode.appendChild(new TrackWidget(track).domNode);
+	if (currentDownloads[track.url]) {
+	    itemnode.appendChild(textSpan(" (caching)", "cachingIndicator"));
+	}
 	listnode.appendChild(itemnode);
     }
 

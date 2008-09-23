@@ -198,6 +198,11 @@ a.folderLink {
     display: none;
 }
 
+.cachingIndicator {
+    color: red;
+    font-size: 66%;
+}
+
 .playlistQueue ol { list-style-type: none; padding: 0px; padding-left: 0.5em; }
 .searchResults ul { list-style-type: none; padding: 0px; padding-left: 0.5em; }
 
