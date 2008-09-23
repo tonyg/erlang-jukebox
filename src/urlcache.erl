@@ -58,14 +58,24 @@ try_rename(Source, Target, N, _PrevError) ->
 	    try_rename(Source, Target, N - 1, E)
     end.
 
+quote_for_shell(S) ->
+    "'" ++ quote_for_shell1(S).
+
+quote_for_shell1("") ->
+    "'";
+quote_for_shell1("'" ++ S) ->
+    "'\"'\"'" ++ quote_for_shell1(S);
+quote_for_shell1([Ch | S]) ->
+    [Ch | quote_for_shell1(S)].
+
 download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
 	true -> ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
-	    CurlPath = os:find_executable("curl"),
-	    CurlPid = execdaemon:run(CurlPath, ["-C", "-", "-o", PartFilename, Url]),
-	    execdaemon:terminate(CurlPid),
+	    CommandString = "curl -C - -o "++PartFilename++" "++quote_for_shell(Url),
+	    io:format("Command: ~p~n", [CommandString]),
+	    os:cmd(CommandString),
 	    ok = try_rename(PartFilename, Filename, 5, no_previous_error)
     end,
     gen_server:cast(CachePid, {download_done, Url}),
