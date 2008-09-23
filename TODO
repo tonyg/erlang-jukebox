@@ -3,3 +3,5 @@
 - Give processes well-known names so I can run a
   jukebox-minus-database on my local machine and have it use a common
   index and spider running on a different machine
+
+- Update the documentation to include the urlcache and curl stuff
