@@ -1,7 +1,7 @@
 -module(spider).
 
 -export([start_link/0]).
--export([spider/1, spider/2, resolve_relative/2, retrieve/1, retrieve/2]).
+-export([spider/1, spider/2, url_encode/1, resolve_relative/2, retrieve/1, retrieve/2]).
 
 start_link() ->
     ibrowse:start_link().
@@ -62,6 +62,27 @@ html_decode(S0) ->
     {ok, S3, _} = regexp:gsub(S2, "&quot;", "\""),
     {ok, S4, _} = regexp:gsub(S3, "&amp;", "\\&"),
     S4.
+
+%% url_encode is lifted from ibrowse, and modified to include digits
+%% and tilde.
+url_encode(Str) when list(Str) ->
+    url_encode_char(lists:reverse(Str), []).
+
+url_encode_char([X | T], Acc) when X >= $a, X =< $z ->
+    url_encode_char(T, [X | Acc]);
+url_encode_char([X | T], Acc) when X >= $A, X =< $Z ->
+    url_encode_char(T, [X | Acc]);
+url_encode_char([X | T], Acc) when X >= $0, X =< $9 ->
+    url_encode_char(T, [X | Acc]);
+url_encode_char([X | T], Acc) when X == $-; X == $_; X == $.; X == $~ ->
+    url_encode_char(T, [X | Acc]);
+url_encode_char([X | T], Acc) ->
+    url_encode_char(T, [$%, d2h(X bsr 4), d2h(X band 16#0f) | Acc]);
+url_encode_char([], Acc) ->
+    Acc.
+
+d2h(N) when N<10 -> N+$0;
+d2h(N) -> N+$a-10.
 
 resolve_relative(Base, Url) ->
     case Url of
