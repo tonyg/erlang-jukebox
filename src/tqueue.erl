@@ -12,19 +12,20 @@ from_list(Urls, Username) ->
     queue:from_list(lists:map(fun (U) -> tqueue_entry(U, Username) end, Urls)).
 
 to_binary(X) when is_list(X) ->
-    list_to_binary(X);
+    list_to_binary(rfc4627:unicode_encode({'utf-8', X}));
 to_binary(X) ->
     X.
 
 to_list(X) when is_binary(X) ->
-    binary_to_list(X);
+    {_Coding, Chars} = rfc4627:unicode_decode(binary_to_list(X)),
+    Chars;
 to_list(X) ->
     X.
 
 entry_to_json(null) -> null;
 entry_to_json(#entry{id = {Node, Stamp}, url = Url, username = Username}) ->
     {obj, [{"id", [list_to_binary(atom_to_list(Node)), tuple_to_list(Stamp)]},
-	   {"url", list_to_binary(Url)},
+	   {"url", to_binary(Url)},
 	   {"username", to_binary(Username)}]}.
 
 entry_from_json(null) -> null;
@@ -33,7 +34,7 @@ entry_from_json({obj, J}) ->
     {value, {_, UrlBin}} = lists:keysearch("url", 1, J),
     {value, {_, UsernameBin}} = lists:keysearch("username", 1, J),
     #entry{id = {list_to_atom(binary_to_list(NodeBin)), list_to_tuple(StampList)},
-	   url = binary_to_list(UrlBin),
+	   url = to_list(UrlBin),
 	   username = to_list(UsernameBin)}.
 
 to_json(Q) ->
