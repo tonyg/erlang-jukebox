@@ -48,6 +48,16 @@ hex_digit(X) when X < 10 ->
 hex_digit(X) ->
     X + $A - 10.
 
+try_rename(_Source, _Target, 0, PrevError) ->
+    exit(PrevError);
+try_rename(Source, Target, N, _PrevError) ->
+    case file:rename(Source, Target) of
+	ok -> ok;
+	E = {error, _} ->
+	    timer:sleep(200),
+	    try_rename(Source, Target, N - 1, E)
+    end.
+
 download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
 	true -> ok;
@@ -56,7 +66,7 @@ download_and_cache(CachePid, Filename, Url) ->
 	    CurlPath = os:find_executable("curl"),
 	    CurlPid = execdaemon:run(CurlPath, ["-C", "-", "-o", PartFilename, Url]),
 	    execdaemon:terminate(CurlPid),
-	    ok = file:rename(PartFilename, Filename)
+	    ok = try_rename(PartFilename, Filename, 5, no_previous_error)
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
