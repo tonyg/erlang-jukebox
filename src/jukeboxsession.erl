@@ -52,10 +52,6 @@ default_name(IpAddr) ->
 	    end
     end.
 
-summary_to_json({idle, Q}) ->
-    {obj, [{"status", <<"idle">>},
-	   {"entry", null},
-	   {"queue", tqueue:to_json(Q)}]};
 summary_to_json({StateSymbol, Q, Entry, IsPaused}) ->
     {obj, [{"status", list_to_binary(atom_to_list(StateSymbol))},
 	   {"entry", tqueue:entry_to_json(Entry)},
