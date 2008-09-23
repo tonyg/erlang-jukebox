@@ -74,7 +74,6 @@ download_and_cache(CachePid, Filename, Url) ->
 	false ->
 	    PartFilename = Filename ++ ".part",
 	    CommandString = "curl -C - -o "++PartFilename++" "++quote_for_shell(Url),
-	    io:format("Command: ~p~n", [CommandString]),
 	    os:cmd(CommandString),
 	    ok = try_rename(PartFilename, Filename, 5, no_previous_error)
     end,
