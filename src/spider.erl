@@ -1,7 +1,7 @@
 -module(spider).
 
 -export([start_link/0]).
--export([spider/1, spider/2, resolve_relative/2, retrieve/1]).
+-export([spider/1, spider/2, resolve_relative/2, retrieve/1, retrieve/2]).
 
 start_link() ->
     ibrowse:start_link().
@@ -17,10 +17,13 @@ debug_out(false, _, _) ->
     ok.
 
 retrieve(Url) ->
-    case ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 0}}]) of
+    retrieve(Url, 30000).
+
+retrieve(Url, Timeout) ->
+    case ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 0}}], Timeout) of
 	Result when element(1, Result) == ok ->
 	    Result;
-	_ -> ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 1}}])
+	_ -> ibrowse:send_req(Url, [], get, [], [{http_vsn, {1, 1}}], Timeout)
     end.
 
 spider([], Results, _WantDebug) ->
