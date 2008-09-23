@@ -40,8 +40,8 @@ clean: cleanlog
 	make -C $(IBROWSE_SOURCE_DIR) clean
 
 cleanlog:
-	rm -f auth.log report.log
-	rm -f *.access
+	rm -f priv/server_root/logs/{access_log,error_log,security_log}
+	rm -f jukebox.log
 
 $(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDES)
 	$(ERLC) $<
