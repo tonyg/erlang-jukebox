@@ -59,7 +59,9 @@ function update_player_status(status) {
     var s = document.getElementById("statusatom");
     var n = document.getElementById("nowplaying");
     var d = document.getElementById("statuspanel");
-    s.innerHTML = ""; s.appendChild(document.createTextNode("Now playing ("+status.status+")"));
+    var pausedString = status.paused ? ", paused" : "";
+    s.innerHTML = "";
+    s.appendChild(document.createTextNode("Now playing ("+status.status+pausedString+")"));
 
     n.innerHTML = "";
     if (status.entry) {

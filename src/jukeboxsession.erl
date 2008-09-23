@@ -56,10 +56,11 @@ summary_to_json({idle, Q}) ->
     {obj, [{"status", <<"idle">>},
 	   {"entry", null},
 	   {"queue", tqueue:to_json(Q)}]};
-summary_to_json({{Status, Entry}, Q}) ->
-    {obj, [{"status", list_to_binary(atom_to_list(Status))},
+summary_to_json({StateSymbol, Q, Entry, IsPaused}) ->
+    {obj, [{"status", list_to_binary(atom_to_list(StateSymbol))},
 	   {"entry", tqueue:entry_to_json(Entry)},
-	   {"queue", tqueue:to_json(Q)}]}.
+	   {"queue", tqueue:to_json(Q)},
+	   {"paused", IsPaused}]}.
 
 history_to_json(H) ->
     lists:map(fun ({Who, {What, Entry}}) ->

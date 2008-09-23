@@ -43,40 +43,56 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 %---------------------------------------------------------------------------
 
--record(state, {status, queue}).
+-record(state, {status, is_paused, current_entry, queue}).
 
-act_on(State=#state{status = idle, queue = TQ}) ->
+act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
     case queue:out(TQ) of
 	{empty, _} -> State;
 	{{value, Entry=#entry{url = Url}}, TQ1} ->
-	    State#state{status = {playing, Entry, play(Url)}, queue = TQ1}
+	    State#state{status = cache(Url, IsPaused),
+			current_entry = Entry,
+			queue = TQ1}
     end;
 act_on(State) -> State.
 
-summarise_state(State) ->
-    Q = State#state.queue,
-    case State#state.status of
-	idle -> {idle, Q};
-	{Other, Entry, _PlayerDetails} -> {{Other, Entry}, Q}
-    end.
+summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused}) ->
+    StatusSymbol = case State#state.status of
+		       idle -> idle;
+		       {Other, _PlayerDetails} -> Other
+		   end,
+    {StatusSymbol, Q, Entry, IsPaused}.
 
 act_and_reply(State) ->
     State1 = act_on(State),
     {reply, summarise_state(State1), State1}.
 
 
-play(Url) ->
+cache(Url, IsPaused) ->
     Extension = filename:extension(Url),
     {ok, Template} = player_mapping(Extension),
+    CacheRef = make_ref(),
+    urlcache:cache(Url, self(), CacheRef),
+    receive
+	{urlcache, ok, CacheRef, LocalFileName} ->
+	    play(Template, LocalFileName, IsPaused)
+    after 100 ->
+	    {caching, {Template, CacheRef}}
+    end.
+
+play(Template, LocalFileName, IsPaused) ->
     [Program | CommandLine] = lists:map(fun
-					    (url) -> Url;
+					    (url) -> LocalFileName;
 					    (Part) -> Part
 					end, Template),
-    execdaemon:run(Program, CommandLine).
+    PlayerPid = execdaemon:run(Program, CommandLine),
+    send_pause(PlayerPid, IsPaused),
+    {playing, PlayerPid}.
 
 
-expand_m3us(List) ->
-    queue:from_list(expand_m3us(queue:to_list(List), [])).
+expand_m3us_and_cache(List) ->
+    Urls = expand_m3us(queue:to_list(List), []),
+    ok = lists:foreach(fun (#entry{url = Url}) -> urlcache:cache(Url) end, Urls),
+    queue:from_list(Urls).
 
 expand_m3us([], Acc) ->
     lists:flatten(lists:reverse(Acc));
@@ -102,12 +118,25 @@ fetch_m3u(Url, Username) ->
 	_Else ->
 	    []
     end.
-    
+
+send_pause(PlayerPid, IsPaused) ->
+    execdaemon:command(PlayerPid, sendsig,
+		       case IsPaused of
+			   true -> "STOP";
+			   false -> "CONT"
+		       end),
+    ok.
+
+make_idle(State) ->
+    State#state{status = idle,
+		current_entry = null}.
+
 init(_Args) ->
-    {ok, #state{status = idle, queue = queue:new()}}.
+    {ok, make_idle(#state{is_paused = false,
+			  queue = queue:new()})}.
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
-    Q1 = expand_m3us(Q),
+    Q1 = expand_m3us_and_cache(Q),
     Q2 = case AtTop of
 	     true -> queue:join(Q1, State#state.queue);
 	     false -> queue:join(State#state.queue, Q1)
@@ -121,28 +150,21 @@ handle_call({lower, QEntry}, _From, State) ->
     act_and_reply(State#state{queue=tqueue:lower(QEntry, State#state.queue)});
 handle_call(get_queue, _From, State) ->
     act_and_reply(State);
-handle_call(skip, _From, State) ->
-    Entry = case State#state.status of
-		idle -> null;
-		{_Other, CurrentEntry, PlayerPid} ->
-		    execdaemon:command(PlayerPid, sendsig, "KILL"),
-		    execdaemon:wait_for_event(PlayerPid),
-		    CurrentEntry
-	    end,
-    NewState = act_on(State#state{status = idle}),
+handle_call(skip, _From, State = #state{current_entry = Entry}) ->
+    case State#state.status of
+	{playing, PlayerPid} ->
+	    execdaemon:command(PlayerPid, sendsig, "KILL"),
+	    execdaemon:wait_for_event(PlayerPid);
+	_ -> ok
+    end,
+    NewState = act_on(make_idle(State)),
     {reply, {ok, Entry, summarise_state(NewState)}, NewState};
 handle_call({pause, On}, _From, State) ->
     case State#state.status of
-	idle -> act_and_reply(State);
-	{_Other, Entry, PlayerPid} ->
-	    NewState = case On of
-			   true -> execdaemon:command(PlayerPid, sendsig, "STOP"),
-				   paused;
-			   false -> execdaemon:command(PlayerPid, sendsig, "CONT"),
-				    playing
-		       end,
-	    act_and_reply(State#state{status = {NewState, Entry, PlayerPid}})
-    end;
+	{playing, PlayerPid} -> send_pause(PlayerPid, On);
+	_ -> ok
+    end,
+    act_and_reply(State#state{is_paused = On});
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 
@@ -153,9 +175,14 @@ handle_info({execdaemon_event, PlayerPid, _Code, _Aux}, State) ->
     execdaemon:terminate(PlayerPid),
     {noreply, State};
 handle_info({execdaemon_eof, _PlayerPid}, State) ->
-    {noreply, act_on(State#state{status = idle})};
+    {noreply, act_on(make_idle(State))};
+handle_info({urlcache, ok, ReceivedRef, LocalFileName},
+	    State = #state{status = {caching, {Template, CacheRef}},
+			   is_paused = IsPaused})
+  when ReceivedRef =:= CacheRef ->
+    {noreply, act_on(State#state{status = play(Template, LocalFileName, IsPaused)})};
 handle_info(Msg, State) ->
-    io:format("Subprocess: ~p~n", Msg),
+    io:format("Subprocess: ~p~n", [Msg]),
     {noreply, State}.
 
 terminate(_Reason, _State) ->

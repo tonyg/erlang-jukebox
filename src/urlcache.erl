@@ -24,7 +24,8 @@ start_caching(Url) ->
     Filename = local_name_for(Url),
     case get({downloader, Url}) of
 	undefined ->
-	    DownloaderPid = spawn_link(fun () -> download_and_cache(Filename, Url) end),
+	    CachePid = self(),
+	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, Url) end),
 	    put({downloader, Url}, DownloaderPid);
 	_DownloaderPid ->
 	    ok
@@ -44,17 +45,17 @@ hex_digit(X) when X < 10 ->
 hex_digit(X) ->
     X + $A - 10.
 
-download_and_cache(Filename, Url) ->
+download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
-	true ->
-	    ok;
+	true -> ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
 	    {ok, "2"++_CodeRest, _, BodyList} = spider:retrieve(Url),
 	    ok = file:write_file(PartFilename, BodyList),
-	    ok = file:rename(PartFilename, Filename),
-	    ok
-    end.
+	    ok = file:rename(PartFilename, Filename)
+    end,
+    gen_server:cast(CachePid, {download_done, Url}),
+    ok.
 
 prune_cache() ->
     filelib:ensure_dir(?CACHE_DIR ++ "/."),
@@ -109,6 +110,9 @@ handle_cast({cache, Url}, State) ->
 handle_cast({cache, Url, Pid, Ref}, State) ->
     LocalFileName = start_caching(Url),
     wait_for_completion(LocalFileName, Pid, Ref),
+    {noreply, State};
+handle_cast({download_done, Url}, State) ->
+    erase({downloader, Url}),
     {noreply, State}.
 
 handle_info(_Info, State) ->
