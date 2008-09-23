@@ -5,7 +5,7 @@
 -define(CACHE_LIMIT_K, (1048576 * 2)).
 
 -export([start_link/0]).
--export([cache/1, cache/3]).
+-export([cache/1, cache/3, current_downloads/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 start_link() ->
@@ -16,6 +16,9 @@ cache(Url) ->
 
 cache(Url, Pid, Ref) ->
     gen_server:cast(urlcache, {cache, Url, Pid, Ref}).
+
+current_downloads() ->
+    gen_server:call(urlcache, current_downloads).
 
 %%---------------------------------------------------------------------------
 
@@ -97,13 +100,20 @@ wait_for_completion1(LocalFileName, Pid, Ref) ->
 	    wait_for_completion1(LocalFileName, Pid, Ref)
     end.
 
+collect_current_downloads([], Urls) ->
+    Urls;
+collect_current_downloads([{{downloader, Url}, _Pid} | Rest], Urls) ->
+    collect_current_downloads(Rest, [Url | Urls]);
+collect_current_downloads([_Other | Rest], Urls) ->
+    collect_current_downloads(Rest, Urls).
+
 %%---------------------------------------------------------------------------
 
 init(_Args) ->
     {ok, none}.
 
-handle_call(_Request, _From, State) ->
-    {noreply, State}.
+handle_call(current_downloads, _From, State) ->
+    {reply, collect_current_downloads(get(), []), State}.
 
 handle_cast({cache, Url}, State) ->
     start_caching(Url),
