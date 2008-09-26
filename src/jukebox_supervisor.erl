@@ -13,20 +13,20 @@ start_link() ->
 init([]) ->
     {ok, {{one_for_one, 10, 10},
 	  [{rfc4627_jsonrpc, {rfc4627_jsonrpc, start_link, []},
-	    transient, 5, worker, [rfc4627_jsonrpc]},
+	    transient, 5000, worker, [rfc4627_jsonrpc]},
 	   {httpd, {httpd, start_link, ["priv/server_root/conf/httpd.conf"]},
 	    transient, infinity, supervisor, [httpd_instance_sup]},
 
-	   {urlcache, {urlcache, start_link, []}, permanent, 5, worker, [urlcache]},
-	   {spider, {spider, start_link, []}, permanent, 5, worker, [ibrowse]},
-	   {trackdb, {trackdb, start_link, []}, transient, 5, worker, [trackdb]},
-	   {player, {player, start_link, []}, transient, 5, worker, [player]},
-	   {volume, {volume, start_link, []}, transient, 5, worker, [volume]},
+	   {urlcache, {urlcache, start_link, []}, permanent, 5000, worker, [urlcache]},
+	   {spider, {spider, start_link, []}, permanent, 5000, worker, [ibrowse]},
+	   {trackdb, {trackdb, start_link, []}, transient, 5000, worker, [trackdb]},
+	   {player, {player, start_link, []}, transient, 5000, worker, [player]},
+	   {volume, {volume, start_link, []}, transient, 5000, worker, [volume]},
 
 	   {configsession, {configsession, start_link, []},
-	    transient, 5, worker, [configsession]},
+	    transient, 5000, worker, [configsession]},
 	   {jukeboxsession, {jukeboxsession, start_link, []},
-	    transient, 5, worker, [jukeboxsession]},
+	    transient, 5000, worker, [jukeboxsession]},
 
 	   {history, {history, start_link, [history, 100]},
-	    transient, 5, worker, [history]}]}}.
+	    transient, 5000, worker, [history]}]}}.
