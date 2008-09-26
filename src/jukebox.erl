@@ -1,7 +1,7 @@
 -module(jukebox).
 -behaviour(application).
 
--export([start/2, stop/1]).
+-export([start/2, stop/1, log_error/2]).
 -export([start/0, stop/0, stop_and_halt/0]).
 
 start() ->
@@ -23,3 +23,7 @@ start(normal, []) ->
 
 stop(_State) ->
     ok.
+
+log_error(WhoStr, JsonFields) ->
+    history:record(history, WhoStr,
+		   {error, [{"error", {obj, JsonFields}}]}).

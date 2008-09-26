@@ -48,8 +48,8 @@ hex_digit(X) when X < 10 ->
 hex_digit(X) ->
     X + $A - 10.
 
-try_rename(_Source, _Target, 0, PrevError) ->
-    exit(PrevError);
+try_rename(Source, Target, 0, PrevError) ->
+    exit({could_not_rename, Source, Target, PrevError});
 try_rename(Source, Target, N, _PrevError) ->
     case file:rename(Source, Target) of
 	ok -> ok;
@@ -73,9 +73,15 @@ download_and_cache(CachePid, Filename, Url) ->
 	true -> ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
-	    CommandString = "curl -C - -o "++PartFilename++" "++quote_for_shell(Url),
-	    os:cmd(CommandString),
-	    ok = try_rename(PartFilename, Filename, 5, no_previous_error)
+	    CommandString = "curl -g -s -S -C - -o "++PartFilename++" "++quote_for_shell(Url),
+	    case os:cmd(CommandString) of
+		"" ->
+		    ok = try_rename(PartFilename, Filename, 5, no_previous_error);
+		ErrorText ->
+		    ok = jukebox:log_error("urlcache",
+					   [{"curl_command", list_to_binary(CommandString)},
+					    {"curl_error", list_to_binary(ErrorText)}])
+	    end
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
