@@ -137,6 +137,9 @@ function update_history(entries) {
 	if (entry.message) {
 	    whatnode.appendChild(document.createTextNode('"' + entry.message + '"'));
 	}
+	if (entry.error) {
+	    whatnode.appendChild(document.createTextNode(JSON.stringify(entry.error)));
+	}
 
 	itemnode.appendChild(whonode);
 	itemnode.appendChild(document.createTextNode(" "));
