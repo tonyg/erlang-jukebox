@@ -1,5 +1,3 @@
-- Save playlist every time it changes
-
 - Give processes well-known names so I can run a
   jukebox-minus-database on my local machine and have it use a common
   index and spider running on a different machine

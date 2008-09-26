@@ -131,13 +131,47 @@ send_pause(PlayerPid, IsPaused) ->
 		       end),
     ok.
 
+stop_current_playback(State = #state{current_entry = Entry}, WaitForTermination) ->
+    case State#state.status of
+	{playing, PlayerPid} ->
+	    execdaemon:command(PlayerPid, sendsig, "KILL"),
+	    case WaitForTermination of
+		true -> execdaemon:wait_for_event(PlayerPid);
+		false -> ok
+	    end;
+	_ -> ok
+    end,
+    {Entry, make_idle(State)}.
+
 make_idle(State) ->
     State#state{status = idle,
 		current_entry = null}.
 
+save_state(#state{queue = Q}) ->
+    file:write_file("ejukebox.state", rfc4627:encode({obj, [{"queue", tqueue:to_json(Q)}]})).
+
+clean_state() ->
+    make_idle(#state{is_paused = false,
+		     queue = queue:new()}).
+
+load_state() ->
+    State = case file:read_file("ejukebox.state") of
+		{ok, PickledStateStr} ->
+		    {ok, PickledState, _Remainder} = rfc4627:decode(PickledStateStr),
+		    case rfc4627:get_field(PickledState, "queue") of
+			{ok, JsonQ} ->
+			    (clean_state())#state{queue = tqueue:from_json(JsonQ)};
+			not_found ->
+			    clean_state()
+		    end;
+		_ ->
+		    clean_state()
+	    end,
+    State#state{is_paused = not(queue:is_empty(State#state.queue))}.
+
 init(_Args) ->
-    {ok, make_idle(#state{is_paused = false,
-			  queue = queue:new()})}.
+    process_flag(trap_exit, true), %% so that we get an opportunity to run terminate().
+    {ok, act_on(load_state())}.
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
     Q1 = expand_m3us_and_cache(Q),
@@ -154,15 +188,10 @@ handle_call({lower, QEntry}, _From, State) ->
     act_and_reply(State#state{queue=tqueue:lower(QEntry, State#state.queue)});
 handle_call(get_queue, _From, State) ->
     act_and_reply(State);
-handle_call(skip, _From, State = #state{current_entry = Entry}) ->
-    case State#state.status of
-	{playing, PlayerPid} ->
-	    execdaemon:command(PlayerPid, sendsig, "KILL"),
-	    execdaemon:wait_for_event(PlayerPid);
-	_ -> ok
-    end,
-    NewState = act_on(make_idle(State)),
-    {reply, {ok, Entry, summarise_state(NewState)}, NewState};
+handle_call(skip, _From, State) ->
+    {SkippedEntry, IdleState} = stop_current_playback(State, true),
+    NewState = act_on(IdleState),
+    {reply, {ok, SkippedEntry, summarise_state(NewState)}, NewState};
 handle_call({pause, On}, _From, State) ->
     case State#state.status of
 	{playing, PlayerPid} -> send_pause(PlayerPid, On);
@@ -185,11 +214,20 @@ handle_info({urlcache, ok, ReceivedRef, LocalFileName},
 			   is_paused = IsPaused})
   when ReceivedRef =:= CacheRef ->
     {noreply, act_on(State#state{status = play(Template, LocalFileName, IsPaused)})};
+handle_info({'EXIT', _Pid, normal}, State) ->
+    {noreply, State};
 handle_info(Msg, State) ->
     io:format("Subprocess: ~p~n", [Msg]),
     {noreply, State}.
 
-terminate(_Reason, _State) ->
+terminate(_Reason, State) ->
+    {InterruptedEntry, IdleState} = stop_current_playback(State, false),
+    OldQ = IdleState#state.queue,
+    StateForStartup = IdleState#state{queue = case InterruptedEntry of
+						  null -> OldQ;
+						  E -> queue:in_r(E, OldQ)
+					      end},
+    save_state(StateForStartup),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
