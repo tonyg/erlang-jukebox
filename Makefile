@@ -33,11 +33,24 @@ daemon: run_prereqs
 
 stop:
 	erl_call -a 'jukebox stop_and_halt []' -sname jukebox
+	@echo
+	@while (ps wwwax | grep 'beam.*sname jukebox' | grep -q -v grep); do \
+		echo 'Waiting for jukebox to exit...'; \
+		sleep 1; \
+	done
+	@echo 'Jukebox has exited.'
+
+restart: stop daemon
+
+restart_clean: stop cleanstate daemon
 
 clean: cleanlog
 	rm -f $(TARGETS)
 	make -C priv/execdaemon clean
 	make -C $(IBROWSE_SOURCE_DIR) clean
+
+cleanstate:
+	rm -f ejukebox.state
 
 cleanlog:
 	rm -f priv/server_root/logs/{access_log,error_log,security_log}
