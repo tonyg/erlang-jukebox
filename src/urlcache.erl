@@ -70,7 +70,10 @@ quote_for_shell1([Ch | S]) ->
 
 download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
-	true -> ok;
+	true ->
+	    %% TODO: touch the file, to avoid needless
+	    %% deletion-and-redownloading on cache prune
+	    ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
 	    CommandString = "curl -g -s -S -C - -o "++PartFilename++" "++quote_for_shell(Url),
