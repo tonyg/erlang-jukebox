@@ -1,11 +1,14 @@
 -module(urlcache).
 -behaviour(gen_server).
 
+-include("info.hrl").
+
 -define(CACHE_DIR, "ejukebox_cache").
 -define(CACHE_LIMIT_K, (1048576 * 2)).
 
 -export([start_link/0]).
 -export([cache/1, cache/3, current_downloads/0]).
+-export([get_info/1, info_to_json/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 start_link() ->
@@ -20,23 +23,50 @@ cache(Url, Pid, Ref) ->
 current_downloads() ->
     gen_server:call(urlcache, current_downloads).
 
+get_info(null) -> null;
+get_info(Url) ->
+    MetadataFilename = local_metadata_name_for(Url),
+    case file:read_file(MetadataFilename) of
+        {error,_} -> null;
+        {ok, File} ->
+            Lines = string:tokens(binary_to_list(File), "\r\n"),
+            Dict = dict:from_list(tupleise(Lines, [])),
+            #info{total_time = list_to_integer(dict:fetch("TotalTime", Dict))}
+    end.
+
+tupleise([], List) -> List;
+tupleise([Name, Value | Rest], List) -> 
+    tupleise(Rest, [{Name, Value} | List]).
+
+
+info_to_json(null) -> null;
+info_to_json(#info{total_time = TotalTime}) ->
+    {obj, [{"totalTime", TotalTime}]}.
+
 %%---------------------------------------------------------------------------
 
 start_caching(Url) ->
     prune_cache(),
     Filename = local_name_for(Url),
+    MetadataFilename = local_metadata_name_for(Url),
     case get({downloader, Url}) of
 	undefined ->
 	    CachePid = self(),
-	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, Url) end),
+	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, MetadataFilename, Url) end),
 	    put({downloader, Url}, DownloaderPid);
 	_DownloaderPid ->
 	    ok
     end,
-    Filename.
+    {Filename, MetadataFilename}.
+
+local_name_prefix(Url) ->
+    ?CACHE_DIR ++ "/" ++ hexify(binary_to_list(crypto:sha(Url))).
 
 local_name_for(Url) ->
-    ?CACHE_DIR ++ "/" ++ hexify(binary_to_list(crypto:sha(Url))) ++ ".cachedata".
+    local_name_prefix(Url) ++ ".cachedata".
+
+local_metadata_name_for(Url) ->
+    local_name_prefix(Url) ++ ".metadata".
 
 hexify([]) ->
     "";
@@ -68,7 +98,7 @@ quote_for_shell1("'" ++ S) ->
 quote_for_shell1([Ch | S]) ->
     [Ch | quote_for_shell1(S)].
 
-download_and_cache(CachePid, Filename, Url) ->
+download_and_cache(CachePid, Filename, MetadataFilename, Url) ->
     case filelib:is_file(Filename) of
 	true ->
 	    %% TODO: touch the file, to avoid needless
@@ -84,7 +114,10 @@ download_and_cache(CachePid, Filename, Url) ->
 		    ok = jukebox:log_error("urlcache",
 					   [{"curl_command", list_to_binary(CommandString)},
 					    {"curl_error", list_to_binary(ErrorText)}])
-	    end
+	    end,
+	    CommandString2 = "metadata/get_metadata.py " ++ filename:extension(Url) ++ " " ++
+                         Filename ++ " " ++ MetadataFilename,
+	    os:cmd(CommandString2)
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
@@ -112,20 +145,20 @@ prune_candidate([C | Rest]) ->
 	    prune_candidate(Rest)
     end.
 
-wait_for_completion(LocalFileName, Pid, Ref) ->
+wait_for_completion(LocalFileName, MetadataFilename, Pid, Ref) ->
     spawn(fun () ->
 		  link(Pid),
-		  wait_for_completion1(LocalFileName, Pid, Ref)
+		  wait_for_completion1(LocalFileName, MetadataFilename, Pid, Ref)
 	  end),
     ok.
 
-wait_for_completion1(LocalFileName, Pid, Ref) ->
-    case filelib:is_file(LocalFileName) of
+wait_for_completion1(LocalFileName, MetadataFilename, Pid, Ref) ->
+    case filelib:is_file(MetadataFilename) of
 	true ->
 	    Pid ! {urlcache, ok, Ref, LocalFileName};
 	false ->
 	    timer:sleep(200),
-	    wait_for_completion1(LocalFileName, Pid, Ref)
+	    wait_for_completion1(LocalFileName, MetadataFilename, Pid, Ref)
     end.
 
 collect_current_downloads([], Urls) ->
@@ -147,8 +180,8 @@ handle_cast({cache, Url}, State) ->
     start_caching(Url),
     {noreply, State};
 handle_cast({cache, Url, Pid, Ref}, State) ->
-    LocalFileName = start_caching(Url),
-    wait_for_completion(LocalFileName, Pid, Ref),
+    {LocalFileName, MetadataFilename} = start_caching(Url),
+    wait_for_completion(LocalFileName, MetadataFilename, Pid, Ref),
     {noreply, State};
 handle_cast({download_done, Url}, State) ->
     erase({downloader, Url}),

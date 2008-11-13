@@ -2,6 +2,7 @@
 -behaviour(gen_server).
 
 -include("tqueue.hrl").
+-include("info.hrl").
 
 -export([start_link/0]).
 -export([init/1, terminate/2, code_change/3, handle_call/3, handle_cast/2, handle_info/2]).
@@ -52,12 +53,18 @@ default_name(IpAddr) ->
 	    end
     end.
 
-summary_to_json({StateSymbol, Q, Entry, IsPaused}) ->
+summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
     CurrentDownloads = urlcache:current_downloads(),
+    Url = case Entry of
+              null -> null;
+              _ -> Entry#entry.url
+          end,
     {obj, [{"status", list_to_binary(atom_to_list(StateSymbol))},
 	   {"entry", tqueue:entry_to_json(Entry)},
+	   {"info",  urlcache:info_to_json(urlcache:get_info(Url))},
 	   {"queue", tqueue:to_json(Q)},
 	   {"paused", IsPaused},
+	   {"elapsedTime", ElapsedTime},
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
 
 history_to_json(H) ->

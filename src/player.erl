@@ -43,7 +43,7 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 %---------------------------------------------------------------------------
 
--record(state, {status, is_paused, current_entry, queue}).
+-record(state, {status, is_paused, current_entry, queue, elapsed_time}).
 
 act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
     case queue:out(TQ) of
@@ -51,16 +51,19 @@ act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
 	{{value, Entry=#entry{url = Url}}, TQ1} ->
 	    State#state{status = cache(Url, IsPaused),
 			current_entry = Entry,
-			queue = TQ1}
+			queue = TQ1,
+			elapsed_time = 0}
     end;
 act_on(State) -> State.
 
-summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused}) ->
+summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused,
+                               elapsed_time = ElapsedTime}) ->
     StatusSymbol = case State#state.status of
 		       idle -> idle;
+		       %%caching -> caching;
 		       {Other, _PlayerDetails} -> Other
 		   end,
-    {StatusSymbol, Q, Entry, IsPaused}.
+    {StatusSymbol, Q, Entry, IsPaused, ElapsedTime}.
 
 act_and_reply(State) ->
     State1 = act_on(State),

@@ -60,8 +60,11 @@ function update_player_status(status) {
     var n = document.getElementById("nowplaying");
     var d = document.getElementById("statuspanel");
     var pausedString = status.paused ? ", paused" : "";
+    var timeString = status.status == "idle" ? "" : 
+                (" " + timeFormat(status.elapsedTime) + " / " + timeFormat(status.info.totalTime));
+
     s.innerHTML = "";
-    s.appendChild(document.createTextNode("Now playing ("+status.status+pausedString+")"));
+    s.appendChild(document.createTextNode("Now playing ("+status.status+pausedString+timeString + ")"));
 
     n.innerHTML = "";
     if (status.entry) {
@@ -103,6 +106,18 @@ function update_player_status(status) {
     var deqAll = new ButtonWidget("Dequeue all").domNode;
     prependChild(d, deqAll);
     Event.observe(deqAll, 'click', do_clear_queue);
+}
+
+function timeFormat(seconds) {
+    function pad(num) {
+        return num < 10 ? "0" + num : num;
+    }
+
+    if (seconds > 3599) {
+        return pad(Math.floor(seconds / 3600)) + ":" + pad(Math.floor(seconds / 60)) + ":" + pad(seconds % 60);
+    } else {
+        return pad(Math.floor(seconds / 60)) + ":" + pad(seconds % 60);
+    }
 }
 
 function historiesEqual(h1, h2) {
