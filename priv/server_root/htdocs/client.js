@@ -2,6 +2,7 @@ var jb = null;
 var currentUsername = "unknown";
 
 var refresh_timer = null; // will be result of setTimeout below.
+var clock_timer = null; // will be result of setTimeout below.
 function refresh_timer_tick() {
     jb.get_queue()
     .addCallback(function (status)
@@ -55,16 +56,46 @@ function prependChild(node, child) {
     return node.insertBefore(child, node.firstChild);
 }
 
-function update_player_status(status) {
-    var s = document.getElementById("statusatom");
-    var n = document.getElementById("nowplaying");
-    var d = document.getElementById("statuspanel");
-    var pausedString = status.paused ? ", paused" : "";
-    var timeString = status.status == "idle" ? "" : 
-                (" " + timeFormat(status.elapsedTime) + " / " + timeFormat(status.info.totalTime));
+var elapsedTime;
+var totalTime;
+var state;
+var paused;
+
+function clock_timer_tick() {
+	if (state == "playing" && !paused) {
+		elapsedTime ++;
+		update_time();
+	}
+	
+	arm_clock_timer();
+}
+
+function arm_clock_timer() {
+    clock_timer = setTimeout(clock_timer_tick, 1000);
+}
+
+function update_time() {
+	var s = document.getElementById("statusatom");
+    var pausedString = paused ? ", paused" : "";
+    var timeString = state == "idle" ? "" : 
+                (" " + timeFormat(elapsedTime) + " / " + timeFormat(totalTime));
 
     s.innerHTML = "";
-    s.appendChild(document.createTextNode("Now playing ("+status.status+pausedString+timeString + ")"));
+    s.appendChild(document.createTextNode("Now playing (" + state + 
+    		pausedString + timeString + ")"));
+}
+
+function update_player_status(status) {
+	state = status.status;
+	if (state != "idle") {
+		paused = status.paused;
+		elapsedTime = status.elapsedTime;
+		totalTime = status.info.totalTime;
+	}
+	update_time();
+
+	var n = document.getElementById("nowplaying");
+    var d = document.getElementById("statuspanel");
 
     n.innerHTML = "";
     if (status.entry) {
@@ -421,5 +452,6 @@ function initClient() {
 	}
 
 	refresh_timer_tick();
+	clock_timer_tick();
     }
 }
