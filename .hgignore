@@ -1,7 +1,5 @@
-(^|/)\_darcs($|/)
-(^|/)\.hg($|/)
-(^|/)\.hgtags($|/)
-^project.log$
-^tailor.state$
-^tailor.state.old$
-^tailor.state.journal$
+^scratch($|/)
+^priv/execdaemon/execdaemon$
+\.beam$
+^priv/server_root/logs/(access|error|security)_log$
+^ejukebox_cache$
