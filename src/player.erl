@@ -132,6 +132,10 @@ send_pause(PlayerPid, IsPaused) ->
 			   true -> "STOP";
 			   false -> "CONT"
 		       end),
+    ticker ! case IsPaused of
+                 true -> stop;
+                 false -> continue
+             end,
     ok.
 
 stop_current_playback(State = #state{current_entry = Entry}, WaitForTermination) ->
@@ -178,15 +182,27 @@ init(_Args) ->
     {ok, act_on(load_state())}.
 
 start_ticker() ->
-    spawn(fun () ->
-          ticker()
-      end),
+    register(ticker, spawn(fun () ->
+          ticker(true)
+      end)),
     ok.
 
-ticker() ->
+ticker(Tick) ->
     timer:sleep(1000),
-    gen_server:cast(player, elapsed_tick),
-    ticker().
+    receive
+        stop ->
+            NewTick = false;
+        continue ->
+            NewTick = true
+    after 0 ->
+        NewTick = Tick
+    end,
+    if 
+        NewTick ->
+            gen_server:cast(player, elapsed_tick);
+        true -> ok
+    end,
+    ticker(NewTick).
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
     Q1 = expand_m3us_and_cache(Q),
