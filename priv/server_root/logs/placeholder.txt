@@ -1,0 +1,1 @@
+This file exists purely so that mercurial doesn't delete the directory.

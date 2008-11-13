@@ -19,9 +19,12 @@ ERL_CMD=erl \
 	+W w \
 	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
 
-all: $(TARGETS)
+all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 	make -C priv/execdaemon
 	make -C $(IBROWSE_SOURCE_DIR)
+
+$(IBROWSE_EBIN_DIR):
+	mkdir $(IBROWSE_EBIN_DIR)
 
 run_prereqs: all
 
