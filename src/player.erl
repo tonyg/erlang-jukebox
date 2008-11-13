@@ -43,7 +43,7 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 %---------------------------------------------------------------------------
 
--record(state, {status, is_paused, current_entry, queue, elapsed_time}).
+-record(state, {status, is_paused, current_entry, queue, elapsed_time=0}).
 
 act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
     case queue:out(TQ) of
@@ -173,8 +173,20 @@ load_state() ->
     State#state{is_paused = not(queue:is_empty(State#state.queue))}.
 
 init(_Args) ->
+    start_ticker(), %% always run the ticker, just reset it when we start a new song
     process_flag(trap_exit, true), %% so that we get an opportunity to run terminate().
     {ok, act_on(load_state())}.
+
+start_ticker() ->
+    spawn(fun () ->
+          ticker()
+      end),
+    ok.
+
+ticker() ->
+    timer:sleep(1000),
+    gen_server:cast(player, elapsed_tick),
+    ticker().
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
     Q1 = expand_m3us_and_cache(Q),
@@ -204,6 +216,9 @@ handle_call({pause, On}, _From, State) ->
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 
+handle_cast(elapsed_tick, State) ->
+    NewState = State#state{elapsed_time = State#state.elapsed_time + 1},
+    {noreply, NewState};
 handle_cast(_Message, State) ->
     {noreply, State}.
 
