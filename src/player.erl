@@ -43,7 +43,7 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 %---------------------------------------------------------------------------
 
--record(state, {status, is_paused, current_entry, queue, elapsed_time=0}).
+-record(state, {status, is_paused, current_entry, queue, elapsed_time}).
 
 act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
     case queue:out(TQ) of
@@ -60,7 +60,6 @@ summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsP
                                elapsed_time = ElapsedTime}) ->
     StatusSymbol = case State#state.status of
 		       idle -> idle;
-		       %%caching -> caching;
 		       {Other, _PlayerDetails} -> Other
 		   end,
     {StatusSymbol, Q, Entry, IsPaused, ElapsedTime}.
@@ -159,7 +158,8 @@ save_state(#state{queue = Q}) ->
 
 clean_state() ->
     make_idle(#state{is_paused = false,
-		     queue = queue:new()}).
+		     queue = queue:new(),
+             elapsed_time = 0}).
 
 load_state() ->
     State = case file:read_file("ejukebox.state") of

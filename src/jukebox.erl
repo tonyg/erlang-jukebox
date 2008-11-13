@@ -2,7 +2,7 @@
 -behaviour(application).
 
 -export([start/2, stop/1, log_error/2]).
--export([start/0, stop/0, stop_and_halt/0]).
+-export([start/0, stop/0, stop_and_halt/0, priv_dir/0]).
 
 start() ->
     application:start(jukebox).
@@ -27,3 +27,11 @@ stop(_State) ->
 log_error(WhoStr, JsonFields) ->
     history:record(history, WhoStr,
 		   {error, [{"error", {obj, JsonFields}}]}).
+
+priv_dir() ->
+    case code:priv_dir(jukebox) of
+    {error, bad_name} ->
+        "./priv";
+    D ->
+        D
+    end.

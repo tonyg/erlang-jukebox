@@ -115,9 +115,10 @@ download_and_cache(CachePid, Filename, MetadataFilename, Url) ->
 					   [{"curl_command", list_to_binary(CommandString)},
 					    {"curl_error", list_to_binary(ErrorText)}])
 	    end,
-	    CommandString2 = "metadata/get_metadata.py " ++ filename:extension(Url) ++ " " ++
-                         Filename ++ " " ++ MetadataFilename,
-	    os:cmd(CommandString2)
+	    CommandString2 = jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
+                         filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
+                         MetadataFilename,
+	    io:format(os:cmd(CommandString2))
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
