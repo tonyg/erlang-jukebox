@@ -43,7 +43,7 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 %---------------------------------------------------------------------------
 
--record(state, {status, is_paused, current_entry, queue}).
+-record(state, {status, is_paused, current_entry, queue, elapsed_acc, last_et_event}).
 
 act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
     case queue:out(TQ) of
@@ -51,16 +51,25 @@ act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
 	{{value, Entry=#entry{url = Url}}, TQ1} ->
 	    State#state{status = cache(Url, IsPaused),
 			current_entry = Entry,
-			queue = TQ1}
+			queue = TQ1,
+            elapsed_acc = 0,
+            last_et_event = get_secs()}
     end;
 act_on(State) -> State.
 
-summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused}) ->
+summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused,
+                               elapsed_acc = ElapsedAcc, last_et_event = LastEtEvent}) ->
     StatusSymbol = case State#state.status of
 		       idle -> idle;
 		       {Other, _PlayerDetails} -> Other
 		   end,
-    {StatusSymbol, Q, Entry, IsPaused}.
+    case IsPaused of
+        true ->
+            Elapsed = ElapsedAcc;
+        false ->
+            Elapsed = ElapsedAcc + get_secs() - LastEtEvent
+    end,
+    {StatusSymbol, Q, Entry, IsPaused, Elapsed}.
 
 act_and_reply(State) ->
     State1 = act_on(State),
@@ -152,7 +161,9 @@ save_state(#state{queue = Q}) ->
 
 clean_state() ->
     make_idle(#state{is_paused = false,
-		     queue = queue:new()}).
+		     queue = queue:new(),
+             elapsed_acc = 0,
+             last_et_event = 0}).
 
 load_state() ->
     State = case file:read_file("ejukebox.state") of
@@ -172,6 +183,10 @@ load_state() ->
 init(_Args) ->
     process_flag(trap_exit, true), %% so that we get an opportunity to run terminate().
     {ok, act_on(load_state())}.
+
+get_secs() ->
+    {MegaSecs, Secs, _} = erlang:now(),
+    MegaSecs * 1000000 + Secs.
 
 handle_call({enqueue, AtTop, Q}, _From, State) ->
     Q1 = expand_m3us_and_cache(Q),
@@ -194,10 +209,19 @@ handle_call(skip, _From, State) ->
     {reply, {ok, SkippedEntry, summarise_state(NewState)}, NewState};
 handle_call({pause, On}, _From, State) ->
     case State#state.status of
-	{playing, PlayerPid} -> send_pause(PlayerPid, On);
-	_ -> ok
+	{playing, PlayerPid} -> 
+        send_pause(PlayerPid, On),
+        case On of 
+            true ->
+                NewAcc = State#state.elapsed_acc + get_secs() - State#state.last_et_event;
+            false ->
+                NewAcc = State#state.elapsed_acc
+        end;
+    _ -> 
+        NewAcc = State#state.elapsed_acc,
+        ok
     end,
-    act_and_reply(State#state{is_paused = On});
+    act_and_reply(State#state{is_paused = On, elapsed_acc = NewAcc, last_et_event = get_secs()});
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 

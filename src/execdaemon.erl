@@ -9,16 +9,8 @@ open() ->
 	{subscribed, Pid2} when Pid == Pid2 -> Pid
     end.
 
-priv_dir() ->
-    case code:priv_dir(jukebox) of
-	{error, bad_name} ->
-	    "./priv";
-	D ->
-	    D
-    end.
-
 startup() ->
-    Port = open_port({spawn, priv_dir() ++ "/execdaemon/execdaemon"}, [stream, use_stdio, eof]),
+    Port = open_port({spawn, jukebox:priv_dir() ++ "/execdaemon/execdaemon"}, [stream, use_stdio, eof]),
     mainloop(Port, 1, [], [], "").
 
 mainloop(Port, ReqNum, Requests, Subscribers, Acc) ->
