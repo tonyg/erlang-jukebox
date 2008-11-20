@@ -19,6 +19,10 @@ ERL_CMD=erl \
 	+W w \
 	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
 
+# You may need debian-multimedia / medibuntu for aacgain
+install_dependencies_debian:
+	sudo apt-get install mpg123 ogg123 mplayer mp3gain vorbisgain aacgain flac
+
 all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 	make -C priv/execdaemon
 	make -C $(IBROWSE_SOURCE_DIR)
