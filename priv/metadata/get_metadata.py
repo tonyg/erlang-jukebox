@@ -73,8 +73,8 @@ def evaluate_gain(extension, music_file):
             pass # It's probably not installed. Just continue.
 
 def add_tag(tags, metadata, read_name, write_name):
-    tag = tags.tags[read_name]
-    if tag:
+    if read_name in tags:
+        tag = tags.tags[read_name]
         tag = tag[0]
         metadata.write("%s\n" % write_name)
         metadata.write("%s\n" % tag)
