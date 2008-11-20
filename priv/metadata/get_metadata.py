@@ -76,6 +76,11 @@ def add_tag(tags, metadata, read_name, write_name):
     if read_name in tags:
         tag = tags.tags[read_name]
         tag = tag[0]
+
+        if isinstance(tag, tuple):
+            # m4a files seem to return track number as a tuple: (tracknumber, totaltracks)
+            (tag, _ignore) = tag
+
         metadata.write("%s\n" % write_name)
         metadata.write("%s\n" % tag)
 
@@ -95,10 +100,18 @@ with open(sys.argv[3], "w") as metadata:
     if gain:
         metadata.write("ReplayGain\n")
         metadata.write("%f\n" % gain)
-    add_tag(tags, metadata, "artist", "ArtistName")
-    add_tag(tags, metadata, "album", "AlbumTitle")
-    add_tag(tags, metadata, "title", "TrackName")
-    add_tag(tags, metadata, "tracknumber", "TrackNumber")
+
+    if extension == '.m4a':
+        # I don't know if this counts as a defect in Mutagen or iTunes
+        add_tag(tags, metadata, "\xa9ART", "ArtistName")
+        add_tag(tags, metadata, "\xa9alb", "AlbumTitle")
+        add_tag(tags, metadata, "\xa9nam", "TrackName")
+        add_tag(tags, metadata, "trkn", "TrackNumber")
+    else:
+        add_tag(tags, metadata, "artist", "ArtistName")
+        add_tag(tags, metadata, "album", "AlbumTitle")
+        add_tag(tags, metadata, "title", "TrackName")
+        add_tag(tags, metadata, "tracknumber", "TrackNumber")
 
     metadata.close()
 
