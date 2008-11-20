@@ -70,7 +70,14 @@ def evaluate_gain(extension, music_file):
         try:
             subprocess.call(cmd)
         except:
-            pass # It's probabyl not installed. Just continue.
+            pass # It's probably not installed. Just continue.
+
+def add_tag(tags, metadata, read_name, write_name):
+    tag = tags.tags[read_name]
+    if tag:
+        tag = tag[0]
+        metadata.write("%s\n" % write_name)
+        metadata.write("%s\n" % tag)
 
 extension = sys.argv[1].lower()
 music_file = sys.argv[2]
@@ -88,5 +95,10 @@ with open(sys.argv[3], "w") as metadata:
     if gain:
         metadata.write("ReplayGain\n")
         metadata.write("%f\n" % gain)
+    add_tag(tags, metadata, "artist", "ArtistName")
+    add_tag(tags, metadata, "album", "AlbumTitle")
+    add_tag(tags, metadata, "title", "TrackName")
+    add_tag(tags, metadata, "tracknumber", "TrackNumber")
+
     metadata.close()
 

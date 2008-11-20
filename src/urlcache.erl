@@ -31,7 +31,12 @@ get_info(Url) ->
         {ok, File} ->
             Lines = string:tokens(binary_to_list(File), "\r\n"),
             Dict = dict:from_list(tupleise(Lines, [])),
-            #info{total_time = list_to_integer(dict:fetch("TotalTime", Dict))}
+            #info{total_time = list_to_integer(dict:fetch("TotalTime", Dict)),
+                  replay_gain = list_to_float(dict:fetch("ReplayGain", Dict)), 
+                  artist_name = dict:find("ArtistName", Dict), 
+                  album_name = dict:find("AlbumTitle", Dict), 
+                  track_name = dict:find("TrackName", Dict), 
+                  track_number = dict:find("TrackNumber", Dict) }
     end.
 
 tupleise([], List) -> List;
