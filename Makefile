@@ -21,7 +21,7 @@ ERL_CMD=erl \
 
 # You may need debian-multimedia / medibuntu for aacgain
 install_dependencies_debian:
-	sudo apt-get install mpg123 ogg123 mplayer mp3gain vorbisgain aacgain flac
+	sudo apt-get install curl mpg123 ogg123 mplayer mp3gain vorbisgain aacgain flac
 
 all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 	make -C priv/execdaemon
