@@ -99,7 +99,7 @@ function update_player_status(status) {
 
     n.innerHTML = "";
     if (status.entry) {
-	n.appendChild(new TrackWidget(status.entry).domNode);
+	n.appendChild(new LargeTrackWidget(status).domNode);
     } else {
 	n.appendChild(document.createElement("br"));
     }
@@ -259,6 +259,30 @@ function ButtonWidget(caption) {
     this.domNode = document.createElement("a");
     this.domNode.className = "action-span";
     this.domNode.innerHTML = caption;
+}
+
+function LargeTrackWidget(status) {
+    this.track = status.entry;
+
+    this.domNode = document.createElement("span");
+    this.domNode.className = "jukeboxTrack";
+
+    var urlParts = this.track.url.split("/");
+    var info = status.info;
+    var partHtml = '<abbr title="' + unescape(this.track.url) + '"><b>' + 
+                   info.trackName + '</b> - ' + info.artistName + '<br/>' +
+                   '<small>Track ' + info.trackNumber + ' from the album ' + 
+                   info.albumTitle + '<a href="' + this.track.url + 
+                   '" class="trackUrlLink">(...)</a></small></abbr>';
+
+    var partnode = document.createElement("span");
+    partnode.className = "finalUrlPart";
+    partnode.innerHTML = partHtml;
+    this.domNode.appendChild(partnode);
+
+    if (this.track.username) {
+	this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
+    }
 }
 
 function TrackWidget(track) {

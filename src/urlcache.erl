@@ -33,10 +33,16 @@ get_info(Url) ->
             Dict = dict:from_list(tupleise(Lines, [])),
             #info{total_time = list_to_integer(dict:fetch("TotalTime", Dict)),
                   replay_gain = list_to_float(dict:fetch("ReplayGain", Dict)), 
-                  artist_name = dict:find("ArtistName", Dict), 
-                  album_name = dict:find("AlbumTitle", Dict), 
-                  track_name = dict:find("TrackName", Dict), 
-                  track_number = dict:find("TrackNumber", Dict) }
+                  artist_name = dict_get("ArtistName", Dict), 
+                  album_title = dict_get("AlbumTitle", Dict), 
+                  track_name = dict_get("TrackName", Dict), 
+                  track_number = dict_get("TrackNumber", Dict) }
+    end.
+
+dict_get(Key, Dict) ->
+    case dict:find(Key, Dict) of
+        error -> null;
+        {ok, Value} -> Value
     end.
 
 tupleise([], List) -> List;
@@ -45,8 +51,12 @@ tupleise([Name, Value | Rest], List) ->
 
 
 info_to_json(null) -> null;
-info_to_json(#info{total_time = TotalTime}) ->
-    {obj, [{"totalTime", TotalTime}]}.
+info_to_json(Info) ->
+    {obj, [{"totalTime", Info#info.total_time},
+           {"artistName", list_to_binary(Info#info.artist_name)},
+           {"albumTitle", list_to_binary(Info#info.album_title)},
+           {"trackName", list_to_binary(Info#info.track_name)},
+           {"trackNumber", list_to_binary(Info#info.track_number)}]}.
 
 %%---------------------------------------------------------------------------
 
