@@ -16,6 +16,8 @@ ERLC=erlc $(ERLC_OPTS)
 ERL_CMD=erl \
 	-boot start_sasl \
 	-sasl errlog_type error \
+	-kernel error_logger '{file,"./jukebox-kernel.log"}' \
+	-sasl sasl_error_logger '{file,"./jukebox-sasl.log"}' \
 	+W w \
 	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
 
@@ -32,7 +34,7 @@ run: run_prereqs
 	$(ERL_CMD) -sname jukebox -s crypto -s jukebox
 
 daemon: run_prereqs
-	$(ERL_CMD) -detached -sname jukebox -s crypto -s jukebox >>jukebox.log 2>&1
+	$(ERL_CMD) -detached -sname jukebox -s crypto -s jukebox >>jukebox-stdout.log 2>&1
 
 stop:
 	erl_call -a 'jukebox stop_and_halt []' -sname jukebox
@@ -57,7 +59,7 @@ cleanstate:
 
 cleanlog:
 	rm -f priv/server_root/logs/{access_log,error_log,security_log}
-	rm -f jukebox.log
+	rm -f jukebox-*.log
 
 $(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDES)
 	$(ERLC) $<
