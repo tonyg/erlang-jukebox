@@ -112,6 +112,11 @@ abbr {
     border: none;
 }
 
+.album-art {
+    float: left;
+    margin: 0 5px 0 0;
+}
+
 h2 {
     border-bottom: 1px solid black;
     font-size: 12pt;

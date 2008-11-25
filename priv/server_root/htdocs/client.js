@@ -269,11 +269,18 @@ function LargeTrackWidget(status) {
 
     var urlParts = this.track.url.split("/");
     var info = status.info;
-    var partHtml = '<abbr title="' + unescape(this.track.url) + '"><b>' + 
-                   info.trackName + '</b> - ' + info.artistName + '<br/>' +
-                   '<small>Track ' + info.trackNumber + ' from the album ' + 
-                   info.albumTitle + '<a href="' + this.track.url + 
-                   '" class="trackUrlLink">(...)</a></small></abbr>';
+    
+    var partHtml = '';
+    
+    if (status.info.albumArt) {
+        partHtml = '<img class="album-art" src="images/' + status.info.cacheHash + '"/>';
+    }
+    
+    partHtml += '<abbr title="' + unescape(this.track.url) + '"><b>' + 
+                info.trackName + '</b> - ' + info.artistName + '<br/>' +
+                '<small>Track ' + info.trackNumber + ' from the album ' + 
+                info.albumTitle + '<a href="' + this.track.url + 
+                '" class="trackUrlLink">(...)</a></small></abbr>';
 
     var partnode = document.createElement("span");
     partnode.className = "finalUrlPart";

@@ -2,20 +2,22 @@
 
 from __future__ import with_statement 
 
+import os
 import sys
 import subprocess
+import Image, ImageFile
 
 from mutagen.apev2 import APEv2
 from mutagen.mp3 import MP3
-from mutagen.easyid3 import EasyID3
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp4 import MP4
 
+thumb_size = (96, 96)
 
 def get_tags(extension, music_file):
     if extension == '.mp3':
-        tags = MP3(music_file, ID3=EasyID3)
+        tags = MP3(music_file)
     elif extension == '.ogg':
         tags = OggVorbis(music_file)
     elif extension == '.flac':
@@ -73,7 +75,7 @@ def evaluate_gain(extension, music_file):
             pass # It's probably not installed. Just continue.
 
 def add_tag(tags, metadata, read_name, write_name):
-    if read_name in tags:
+    if read_name in tags.tags:
         tag = tags.tags[read_name]
         tag = tag[0]
 
@@ -94,7 +96,10 @@ if not gain:
     evaluate_gain(extension, music_file)
     gain = get_gain(extension, music_file)
 
-with open(sys.argv[3], "w") as metadata: 
+cacheName = sys.argv[3]
+cacheHash = cacheName.split("/")[1]
+
+with open(cacheName + ".metadata", "w") as metadata: 
     metadata.write("totalTime\n")
     metadata.write("%d\n" % tags.info.length)
     if gain:
@@ -107,11 +112,31 @@ with open(sys.argv[3], "w") as metadata:
         add_tag(tags, metadata, "\xa9alb", "albumTitle")
         add_tag(tags, metadata, "\xa9nam", "trackName")
         add_tag(tags, metadata, "trkn", "trackNumber")
+
+    elif extension == '.mp3':
+        add_tag(tags, metadata, "TPE1", "artistName")
+        add_tag(tags, metadata, "TALB", "albumTitle")
+        add_tag(tags, metadata, "TIT2", "trackName")
+        add_tag(tags, metadata, "TRCK", "trackNumber")
+        if 'APIC:Front Cover' in tags:
+            apic = tags.tags['APIC:Front Cover']
+            image_folder = os.path.join("priv", "server_root", "htdocs", "images")
+            if not os.path.exists(image_folder):
+                os.mkdir(image_folder)
+            image_file = os.path.join(image_folder, cacheHash)
+            parser = ImageFile.Parser()
+            parser.feed(apic.data)
+            im = parser.close()
+            im.thumbnail(thumb_size, Image.ANTIALIAS)
+            im.save(image_file, "JPEG")
+            metadata.write("albumArt\nYes\n")
+
     else:
         add_tag(tags, metadata, "artist", "artistName")
         add_tag(tags, metadata, "album", "albumTitle")
         add_tag(tags, metadata, "title", "trackName")
         add_tag(tags, metadata, "tracknumber", "trackNumber")
 
+    metadata.write("cacheHash\n%s\n" % cacheHash)
     metadata.close()
 

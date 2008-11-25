@@ -53,7 +53,7 @@ start_caching(Url) ->
     case get({downloader, Url}) of
 	undefined ->
 	    CachePid = self(),
-	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, MetadataFilename, Url) end),
+	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, Url) end),
 	    put({downloader, Url}, DownloaderPid);
 	_DownloaderPid ->
 	    ok
@@ -99,7 +99,7 @@ quote_for_shell1("'" ++ S) ->
 quote_for_shell1([Ch | S]) ->
     [Ch | quote_for_shell1(S)].
 
-download_and_cache(CachePid, Filename, MetadataFilename, Url) ->
+download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
 	true ->
 	    %% TODO: touch the file, to avoid needless
@@ -118,8 +118,8 @@ download_and_cache(CachePid, Filename, MetadataFilename, Url) ->
 	    end,
 	    CommandString2 = jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
                          filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
-                         MetadataFilename,
-	    io:format(os:cmd(CommandString2))
+                         local_name_prefix(Url),
+	    os:cmd(CommandString2)
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
