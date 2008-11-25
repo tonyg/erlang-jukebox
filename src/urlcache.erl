@@ -1,8 +1,6 @@
 -module(urlcache).
 -behaviour(gen_server).
 
--include("info.hrl").
-
 -define(CACHE_DIR, "ejukebox_cache").
 -define(CACHE_LIMIT_K, (1048576 * 2)).
 
@@ -30,33 +28,21 @@ get_info(Url) ->
         {error,_} -> null;
         {ok, File} ->
             Lines = string:tokens(binary_to_list(File), "\r\n"),
-            Dict = dict:from_list(tupleise(Lines, [])),
-            #info{total_time = list_to_integer(dict:fetch("TotalTime", Dict)),
-                  replay_gain = list_to_float(dict:fetch("ReplayGain", Dict)), 
-                  artist_name = dict_get("ArtistName", Dict), 
-                  album_title = dict_get("AlbumTitle", Dict), 
-                  track_name = dict_get("TrackName", Dict), 
-                  track_number = dict_get("TrackNumber", Dict) }
-    end.
-
-dict_get(Key, Dict) ->
-    case dict:find(Key, Dict) of
-        error -> null;
-        {ok, Value} -> Value
+            dict:from_list(tupleise(Lines, []))
     end.
 
 tupleise([], List) -> List;
 tupleise([Name, Value | Rest], List) -> 
     tupleise(Rest, [{Name, Value} | List]).
 
-
 info_to_json(null) -> null;
 info_to_json(Info) ->
-    {obj, [{"totalTime", Info#info.total_time},
-           {"artistName", list_to_binary(Info#info.artist_name)},
-           {"albumTitle", list_to_binary(Info#info.album_title)},
-           {"trackName", list_to_binary(Info#info.track_name)},
-           {"trackNumber", list_to_binary(Info#info.track_number)}]}.
+    {obj, dict_to_json(Info, dict:fetch_keys(Info), [])}.
+
+dict_to_json(_Dict, [], Acc) ->
+    Acc;
+dict_to_json(Dict, [Key | Keys], Acc) ->
+    dict_to_json(Dict, Keys, [{Key, list_to_binary(dict:fetch(Key, Dict))} | Acc]).
 
 %%---------------------------------------------------------------------------
 

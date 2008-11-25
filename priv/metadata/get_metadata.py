@@ -95,23 +95,23 @@ if not gain:
     gain = get_gain(extension, music_file)
 
 with open(sys.argv[3], "w") as metadata: 
-    metadata.write("TotalTime\n")
+    metadata.write("totalTime\n")
     metadata.write("%d\n" % tags.info.length)
     if gain:
-        metadata.write("ReplayGain\n")
+        metadata.write("replayGain\n")
         metadata.write("%f\n" % gain)
 
     if extension == '.m4a':
         # I don't know if this counts as a defect in Mutagen or iTunes
-        add_tag(tags, metadata, "\xa9ART", "ArtistName")
-        add_tag(tags, metadata, "\xa9alb", "AlbumTitle")
-        add_tag(tags, metadata, "\xa9nam", "TrackName")
-        add_tag(tags, metadata, "trkn", "TrackNumber")
+        add_tag(tags, metadata, "\xa9ART", "artistName")
+        add_tag(tags, metadata, "\xa9alb", "albumTitle")
+        add_tag(tags, metadata, "\xa9nam", "trackName")
+        add_tag(tags, metadata, "trkn", "trackNumber")
     else:
-        add_tag(tags, metadata, "artist", "ArtistName")
-        add_tag(tags, metadata, "album", "AlbumTitle")
-        add_tag(tags, metadata, "title", "TrackName")
-        add_tag(tags, metadata, "tracknumber", "TrackNumber")
+        add_tag(tags, metadata, "artist", "artistName")
+        add_tag(tags, metadata, "album", "albumTitle")
+        add_tag(tags, metadata, "title", "trackName")
+        add_tag(tags, metadata, "tracknumber", "trackNumber")
 
     metadata.close()
 
