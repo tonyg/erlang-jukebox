@@ -97,7 +97,6 @@ try:
         evaluate_gain(extension, music_file)
         gain = get_gain(extension, music_file)
     
-    cacheName = sys.argv[3]
     cacheHash = cacheName.split("/")[1]
     
     with open(cacheName + ".metadata", "w") as metadata: 
@@ -141,9 +140,11 @@ try:
     
         metadata.write("cacheHash\n%s\n" % cacheHash)
         metadata.close()
+        
+cacheName = sys.argv[3]
     
 except:
-    with open(sys.argv[3], "w") as metadata:
+    with open(cacheName + ".metadata", "w") as metadata:
         metadata.write("- Error\n")
         import traceback
         traceback.print_exc(file = metadata)

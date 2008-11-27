@@ -32,6 +32,8 @@ get_info(Url) ->
 		"+" ++ _ ->
             dict:from_list(tupleise(Lines, []));
 		"-" ++ _ ->
+            jukebox:log_error("urlcache",
+                      [{"metadata_error", list_to_binary(Lines)}]),
 		    dict:new()
 	    end
     end.
