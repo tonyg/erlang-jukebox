@@ -86,7 +86,23 @@ def add_tag(tags, metadata, read_name, write_name):
         metadata.write("%s\n" % write_name)
         metadata.write("%s\n" % tag)
 
-try:
+def write_albumart(tags, metadata, name):
+    if name in tags.tags:
+        cacheHash = cacheName.split("/")[1]
+        image_folder = os.path.join("priv", "server_root", "htdocs", "images")
+        if not os.path.exists(image_folder):
+            os.mkdir(image_folder)
+        image_file = os.path.join(image_folder, cacheHash)
+        parser = ImageFile.Parser()
+        parser.feed(tags.tags[name].data)
+        im = parser.close()
+        print im
+        im.thumbnail(thumb_size, Image.ANTIALIAS)
+        im.save(image_file, "JPEG")
+        metadata.write("albumArt\nYes\n")
+
+
+def write_metadata():
     extension = sys.argv[1].lower()
     music_file = sys.argv[2]
     
@@ -113,24 +129,14 @@ try:
             add_tag(tags, metadata, "\xa9alb", "albumTitle")
             add_tag(tags, metadata, "\xa9nam", "trackName")
             add_tag(tags, metadata, "trkn", "trackNumber")
-    
+            write_albumart(tags, metadata, "covr")
+
         elif extension == '.mp3':
             add_tag(tags, metadata, "TPE1", "artistName")
             add_tag(tags, metadata, "TALB", "albumTitle")
             add_tag(tags, metadata, "TIT2", "trackName")
             add_tag(tags, metadata, "TRCK", "trackNumber")
-            if 'APIC:Front Cover' in tags:
-                apic = tags.tags['APIC:Front Cover']
-                image_folder = os.path.join("priv", "server_root", "htdocs", "images")
-                if not os.path.exists(image_folder):
-                    os.mkdir(image_folder)
-                image_file = os.path.join(image_folder, cacheHash)
-                parser = ImageFile.Parser()
-                parser.feed(apic.data)
-                im = parser.close()
-                im.thumbnail(thumb_size, Image.ANTIALIAS)
-                im.save(image_file, "JPEG")
-                metadata.write("albumArt\nYes\n")
+            write_albumart(tags, metadata, "APIC:Front Cover")
     
         else:
             add_tag(tags, metadata, "artist", "artistName")
@@ -143,6 +149,8 @@ try:
         
 cacheName = sys.argv[3]
     
+try:
+    write_metadata()
 except:
     with open(cacheName + ".metadata", "w") as metadata:
         metadata.write("- Error\n")
