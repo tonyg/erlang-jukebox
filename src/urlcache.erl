@@ -27,8 +27,13 @@ get_info(Url) ->
     case file:read_file(MetadataFilename) of
         {error,_} -> null;
         {ok, File} ->
-            Lines = string:tokens(binary_to_list(File), "\r\n"),
-            dict:from_list(tupleise(Lines, []))
+            [StatusLine | Lines] = string:tokens(binary_to_list(File), "\r\n"),
+	    case StatusLine of
+		"+" ++ _ ->
+            dict:from_list(tupleise(Lines, []));
+		"-" ++ _ ->
+		    dict:new()
+	    end
     end.
 
 tupleise([], List) -> List;
@@ -119,7 +124,13 @@ download_and_cache(CachePid, Filename, Url) ->
 	    CommandString2 = jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
                          filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
                          local_name_prefix(Url),
-	    os:cmd(CommandString2)
+	    case os:cmd(CommandString2) of
+		"" -> ok;
+		MetadataOutput ->
+		    jukebox:log_error("urlcache",
+				      [{"metadata_command", list_to_binary(CommandString2)},
+				       {"metadata_error", list_to_binary(MetadataOutput)}])
+	    end
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.

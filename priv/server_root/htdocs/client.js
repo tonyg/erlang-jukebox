@@ -64,6 +64,10 @@ var paused;
 function clock_timer_tick() {
 	if (state == "playing" && !paused) {
 		elapsedTime ++;
+		if (elapsedTime > totalTime) {
+		    elapsedTime = totalTime;
+		    refresh_timer_tick();
+		}
 		update_time();
 	}
 	
