@@ -5,7 +5,6 @@ from __future__ import with_statement
 import os
 import sys
 import subprocess
-import Image, ImageFile
 
 from mutagen.apev2 import APEv2
 from mutagen.mp3 import MP3
@@ -88,12 +87,18 @@ def add_tag(tags, metadata, read_name, write_name):
 
 def write_albumart(tags, metadata, name):
     if name in tags.tags:
-        parser = ImageFile.Parser()
-        parser.feed(tags.tags[name].data)
-        im = parser.close()
-        im.thumbnail(thumb_size, Image.ANTIALIAS)
-        image_file = os.path.join(cache_folder, cache_hash + ".jpeg")
-        im.save(image_file, "JPEG")
+        image_file = os.path.join(cache_folder, cache_hash + ".orig")
+        image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
+
+        with open(image_file, "w") as image: 
+            image.write(tags.tags[name].data)
+
+        try:
+            subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled])
+        except:
+             pass #It's probably not installed. Do nothing.
+            
+        os.unlink(image_file)           
         metadata.write("albumArt\nYes\n")
 
 

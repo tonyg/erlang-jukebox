@@ -23,7 +23,7 @@ ERL_CMD=erl \
 
 # You will need debian-multimedia / medibuntu for aacgain
 install_dependencies_debian:
-	sudo apt-get install curl vlc mp3gain vorbisgain aacgain flac
+	sudo apt-get install curl vlc mp3gain vorbisgain aacgain flac imagemagick
 
 all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 	make -C priv/execdaemon
