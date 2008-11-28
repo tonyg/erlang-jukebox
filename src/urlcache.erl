@@ -1,14 +1,13 @@
 -module(urlcache).
 -behaviour(gen_server).
+-include("tqueue.hrl").
 
--include("info.hrl").
-
--define(CACHE_DIR, "ejukebox_cache").
+-define(CACHE_DIR, "priv/server_root/htdocs/cache").
 -define(CACHE_LIMIT_K, (1048576 * 2)).
 
 -export([start_link/0]).
 -export([cache/1, cache/3, current_downloads/0]).
--export([get_info/1, info_to_json/1]).
+-export([get_info/1, info_to_json/1, queue_info_json/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 start_link() ->
@@ -32,10 +31,11 @@ get_info(Url) ->
             [StatusLine | Lines] = string:tokens(binary_to_list(File), "\r\n"),
 	    case StatusLine of
 		"+" ++ _ ->
-		    Dict = dict:from_list(tupleise(Lines, [])),
-		    #info{total_time = list_to_integer(dict:fetch("TotalTime", Dict))};
+            dict:from_list(tupleise(Lines, []));
 		"-" ++ _ ->
-		    #info{}
+            jukebox:log_error("urlcache",
+                      [{"metadata_error", list_to_binary(Lines)}]),
+		    dict:new()
 	    end
     end.
 
@@ -43,10 +43,18 @@ tupleise([], List) -> List;
 tupleise([Name, Value | Rest], List) -> 
     tupleise(Rest, [{Name, Value} | List]).
 
-
 info_to_json(null) -> null;
-info_to_json(#info{total_time = TotalTime}) ->
-    {obj, [{"totalTime", TotalTime}]}.
+info_to_json(Info) ->
+    {obj, dict_to_json(Info, dict:fetch_keys(Info), [])}.
+
+dict_to_json(_Dict, [], Acc) ->
+    Acc;
+dict_to_json(Dict, [Key | Keys], Acc) ->
+    dict_to_json(Dict, Keys, [{Key, list_to_binary(dict:fetch(Key, Dict))} | Acc]).
+
+queue_info_json(Q) ->
+    UrlList = lists:map(fun (_ = #entry{url = Url}) -> Url end, queue:to_list(Q)),
+    lists:map(fun (Url) -> info_to_json(get_info(Url)) end, UrlList).
 
 %%---------------------------------------------------------------------------
 
@@ -57,7 +65,7 @@ start_caching(Url) ->
     case get({downloader, Url}) of
 	undefined ->
 	    CachePid = self(),
-	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, MetadataFilename, Url) end),
+	    DownloaderPid = spawn_link(fun () -> download_and_cache(CachePid, Filename, Url) end),
 	    put({downloader, Url}, DownloaderPid);
 	_DownloaderPid ->
 	    ok
@@ -103,7 +111,7 @@ quote_for_shell1("'" ++ S) ->
 quote_for_shell1([Ch | S]) ->
     [Ch | quote_for_shell1(S)].
 
-download_and_cache(CachePid, Filename, MetadataFilename, Url) ->
+download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
 	true ->
 	    %% TODO: touch the file, to avoid needless
@@ -122,7 +130,7 @@ download_and_cache(CachePid, Filename, MetadataFilename, Url) ->
 	    end,
 	    CommandString2 = jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
                          filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
-                         MetadataFilename,
+                         local_name_prefix(Url),
 	    case os:cmd(CommandString2) of
 		"" -> ok;
 		MetadataOutput ->

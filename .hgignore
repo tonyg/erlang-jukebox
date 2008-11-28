@@ -2,7 +2,7 @@
 ^priv/execdaemon/execdaemon$
 \.beam$
 ^priv/server_root/logs/(access|error|security)_log$
-^ejukebox_cache$
+^priv/server_root/htdocs/cache$
 ^ejukebox.db$
 ^ejukebox.state$
 ^.project$
