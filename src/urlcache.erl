@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -include("tqueue.hrl").
 
--define(CACHE_DIR, "ejukebox_cache").
+-define(CACHE_DIR, "priv/server_root/htdocs/cache").
 -define(CACHE_LIMIT_K, (1048576 * 2)).
 
 -export([start_link/0]).

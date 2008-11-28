@@ -280,7 +280,7 @@ function LargeTrackWidget(entry, info, size) {
     partHtml += '<span class="img-holder">';
     
     if (info.albumArt) {
-        partHtml += '<img src="images/' + info.cacheHash + '"/>';
+        partHtml += '<img src="cache/' + info.cacheHash + '.jpeg"/>';
     }
     
     partHtml += '</span>';

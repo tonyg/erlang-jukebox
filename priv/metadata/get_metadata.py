@@ -88,15 +88,11 @@ def add_tag(tags, metadata, read_name, write_name):
 
 def write_albumart(tags, metadata, name):
     if name in tags.tags:
-        cacheHash = cacheName.split("/")[1]
-        image_folder = os.path.join("priv", "server_root", "htdocs", "images")
-        if not os.path.exists(image_folder):
-            os.mkdir(image_folder)
-        image_file = os.path.join(image_folder, cacheHash)
         parser = ImageFile.Parser()
         parser.feed(tags.tags[name].data)
         im = parser.close()
         im.thumbnail(thumb_size, Image.ANTIALIAS)
+        image_file = os.path.join(cache_folder, cache_hash + ".jpeg")
         im.save(image_file, "JPEG")
         metadata.write("albumArt\nYes\n")
 
@@ -111,10 +107,8 @@ def write_metadata():
     if not gain:
         evaluate_gain(extension, music_file)
         gain = get_gain(extension, music_file)
-    
-    cacheHash = cacheName.split("/")[1]
-    
-    with open(cacheName + ".metadata", "w") as metadata: 
+        
+    with open(cache_name + ".metadata", "w") as metadata: 
         metadata.write("+ OK\n")
         metadata.write("totalTime\n")
         metadata.write("%d\n" % tags.info.length)
@@ -143,15 +137,16 @@ def write_metadata():
             add_tag(tags, metadata, "title", "trackName")
             add_tag(tags, metadata, "tracknumber", "trackNumber")
     
-        metadata.write("cacheHash\n%s\n" % cacheHash)
+        metadata.write("cacheHash\n%s\n" % cache_hash)
         metadata.close()
         
-cacheName = sys.argv[3]
-    
+cache_name = sys.argv[3]
+(cache_folder, cache_hash) = cache_name.rsplit("/", 1)
+
 try:
     write_metadata()
 except:
-    with open(cacheName + ".metadata", "w") as metadata:
+    with open(cache_name + ".metadata", "w") as metadata:
         metadata.write("- Error\n")
         import traceback
         traceback.print_exc(file = metadata)
