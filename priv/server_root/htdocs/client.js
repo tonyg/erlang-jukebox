@@ -103,7 +103,7 @@ function update_player_status(status) {
 
     n.innerHTML = "";
     if (status.entry) {
-	n.appendChild(new LargeTrackWidget(status).domNode);
+	n.appendChild(new LargeTrackWidget(status.entry, status.info, "large").domNode);
     } else {
 	n.appendChild(document.createElement("br"));
     }
@@ -116,19 +116,23 @@ function update_player_status(status) {
     var listnode = document.createElement("ol");
     for (var i = 0; i < status.queue.length; i++) {
 	var track = status.queue[i];
+	var info = status.queueInfo[i];
 	var itemnode = document.createElement("li");
-	itemnode.appendChild(button(dequeuer_for(track), "dequeue",
+        var span = document.createElement("span");
+        span.className = "queue-buttons";
+	itemnode.appendChild(span);
+	span.appendChild(button(dequeuer_for(track), "dequeue",
 				    "imageButton dequeueButton",
 				    "Dequeue track"));
-	itemnode.appendChild(spacerText(" "));
-	itemnode.appendChild(button(raiser_for(track), "up",
+	span.appendChild(spacerText(" "));
+	span.appendChild(button(raiser_for(track), "up",
 				    "imageButton upButton",
 				    "Move track earlier in queue"));
-	itemnode.appendChild(spacerText("/"));
-	itemnode.appendChild(button(lowerer_for(track), "down",
+	span.appendChild(spacerText("/"));
+	span.appendChild(button(lowerer_for(track), "down",
 				    "imageButton downButton",
 				    "Move track later in queue"));
-	itemnode.appendChild(new TrackWidget(track).domNode);
+	itemnode.appendChild(new LargeTrackWidget(track, info, "small").domNode);
 	if (currentDownloads[track.url]) {
 	    itemnode.appendChild(textSpan(" (caching)", "cachingIndicator"));
 	}
@@ -265,31 +269,29 @@ function ButtonWidget(caption) {
     this.domNode.innerHTML = caption;
 }
 
-function LargeTrackWidget(status) {
-    this.track = status.entry;
+function LargeTrackWidget(entry, info, size) {
+    this.track = entry;
+    var urlParts = this.track.url.split("/");
 
     this.domNode = document.createElement("span");
-    this.domNode.className = "jukeboxTrack";
+    this.domNode.className = "jukebox-track-" + size;
 
-    var urlParts = this.track.url.split("/");
-    var info = status.info;
+    var partHtml = '<span class="finalUrlPart">';    
+    partHtml += '<span class="img-holder">';
     
-    var partHtml = '';
-    
-    if (status.info.albumArt) {
-        partHtml = '<img class="album-art" src="images/' + status.info.cacheHash + '"/>';
+    if (info.albumArt) {
+        partHtml += '<img src="images/' + info.cacheHash + '"/>';
     }
     
-    partHtml += '<abbr title="' + unescape(this.track.url) + '"><b>' + 
-                info.trackName + '</b> - ' + info.artistName + '<br/>' +
-                '<small>Track ' + info.trackNumber + ' from the album ' + 
-                info.albumTitle + '<a href="' + this.track.url + 
-                '" class="trackUrlLink">(...)</a></small></abbr>';
+    partHtml += '</span>';
+    partHtml += '<abbr title="' + unescape(this.track.url) + '">';
+    partHtml += '<b>' + info.trackName + '</b> - ' + info.artistName + '<br/>';
+    partHtml += '<small>Track ' + info.trackNumber + ' from the album ' + info.albumTitle;
+    partHtml += '<a href="' + this.track.url + '" class="trackUrlLink">(...)</a></small>';
+    partHtml += '</abbr>';
+    partHtml += '</span>';
 
-    var partnode = document.createElement("span");
-    partnode.className = "finalUrlPart";
-    partnode.innerHTML = partHtml;
-    this.domNode.appendChild(partnode);
+    this.domNode.innerHTML = partHtml;
 
     if (this.track.username) {
 	this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
@@ -325,7 +327,7 @@ function TrackWidget(track) {
     this.domNode.appendChild(partnode);
 
     if (this.track.username) {
-	this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
+    this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
     }
 }
 

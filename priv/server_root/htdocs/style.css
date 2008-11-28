@@ -112,9 +112,38 @@ abbr {
     border: none;
 }
 
-.album-art {
+.queue-buttons {
+    display: block;
+    float: left;
+    clear: both;
+}
+
+.jukebox-track-large .img-holder {
     float: left;
     margin: 0 5px 0 0;
+    width: 96px;
+    height: 96px;
+    border: 1px solid #ccc;
+}
+
+.jukebox-track-small {
+    float: left;
+    display: block;
+    margin: 0 0 2px 0;
+}
+
+.jukebox-track-small .img-holder {
+    display: block;
+    float: left;
+    margin: 0 5px 0 0;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ccc;
+}
+
+.jukebox-track-small img {
+    width: 40px;
+    height: 40px;
 }
 
 h2 {

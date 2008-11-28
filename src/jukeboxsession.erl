@@ -62,6 +62,7 @@ summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
 	   {"entry", tqueue:entry_to_json(Entry)},
 	   {"info",  urlcache:info_to_json(urlcache:get_info(Url))},
 	   {"queue", tqueue:to_json(Q)},
+       {"queueInfo",  urlcache:queue_info_json(Q)},
 	   {"paused", IsPaused},
 	   {"elapsedTime", ElapsedTime},
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.

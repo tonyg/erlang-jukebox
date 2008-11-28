@@ -1,12 +1,13 @@
 -module(urlcache).
 -behaviour(gen_server).
+-include("tqueue.hrl").
 
 -define(CACHE_DIR, "ejukebox_cache").
 -define(CACHE_LIMIT_K, (1048576 * 2)).
 
 -export([start_link/0]).
 -export([cache/1, cache/3, current_downloads/0]).
--export([get_info/1, info_to_json/1]).
+-export([get_info/1, info_to_json/1, queue_info_json/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 start_link() ->
@@ -50,6 +51,10 @@ dict_to_json(_Dict, [], Acc) ->
     Acc;
 dict_to_json(Dict, [Key | Keys], Acc) ->
     dict_to_json(Dict, Keys, [{Key, list_to_binary(dict:fetch(Key, Dict))} | Acc]).
+
+queue_info_json(Q) ->
+    UrlList = lists:map(fun (_ = #entry{url = Url}) -> Url end, queue:to_list(Q)),
+    lists:map(fun (Url) -> info_to_json(get_info(Url)) end, UrlList).
 
 %%---------------------------------------------------------------------------
 

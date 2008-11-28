@@ -96,7 +96,6 @@ def write_albumart(tags, metadata, name):
         parser = ImageFile.Parser()
         parser.feed(tags.tags[name].data)
         im = parser.close()
-        print im
         im.thumbnail(thumb_size, Image.ANTIALIAS)
         im.save(image_file, "JPEG")
         metadata.write("albumArt\nYes\n")
