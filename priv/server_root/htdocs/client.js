@@ -271,7 +271,6 @@ function ButtonWidget(caption) {
 
 function LargeTrackWidget(entry, info, size) {
     this.track = entry;
-    var urlParts = this.track.url.split("/");
 
     this.domNode = document.createElement("span");
     this.domNode.className = "jukebox-track-" + size;
@@ -285,9 +284,19 @@ function LargeTrackWidget(entry, info, size) {
     
     partHtml += '</span>';
     partHtml += '<abbr title="' + unescape(this.track.url) + '">';
-    partHtml += '<b>' + info.trackName + '</b> - ' + info.artistName + '<br/>';
-    partHtml += '<small>Track ' + info.trackNumber + ' from the album ' + info.albumTitle;
-    partHtml += '<a href="' + this.track.url + '" class="trackUrlLink">(...)</a></small>';
+    
+    if (info.trackName) {
+        partHtml += '<b>' + info.trackName + '</b>';
+        if (info.artistName) partHtml += ' - ' + info.artistName;
+        partHtml += '<br/><small>';
+        if (info.trackNumber) partHtml += 'Track ' + info.trackNumber;
+        if (info.albumTitle) partHtml +=' from the album "' + info.albumTitle + '"';
+        partHtml += '<a href="' + this.track.url + '" class="trackUrlLink">(...)</a></small>';
+    } else {
+        partHtml += short_url(this.track.url);
+        partHtml += '<a href="' + this.track.url + '" class="trackUrlLink">(...)</a>';
+    }
+
     partHtml += '</abbr>';
     partHtml += '</span>';
 
@@ -310,15 +319,9 @@ function TrackWidget(track) {
     linknode.appendChild(document.createTextNode("(...)"));
     this.domNode.appendChild(linknode);
 
-    var urlParts = this.track.url.split("/");
-
-    var partstr = urlParts[urlParts.length - 1];
-    partstr = unescape(partstr);
-    partstr = partstr.replace(/_/g, ' ');
-
     var abbrnode = document.createElement("abbr");
     abbrnode.title = unescape(this.track.url);
-    abbrnode.appendChild(document.createTextNode(partstr));
+    abbrnode.appendChild(document.createTextNode(short_url(this.track.url)));
     abbrnode.appendChild(document.createTextNode(" "));
 
     var partnode = document.createElement("span");
@@ -329,6 +332,14 @@ function TrackWidget(track) {
     if (this.track.username) {
     this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
     }
+}
+
+function short_url(url) {
+    var urlParts = url.split("/");
+
+    var partstr = urlParts[urlParts.length - 1];
+    partstr = unescape(partstr);
+    return partstr.replace(/_/g, ' ');
 }
 
 function group_by_folder(results) {
