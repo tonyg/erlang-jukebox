@@ -74,7 +74,7 @@ def evaluate_gain(extension, music_file):
             pass # It's probably not installed. Just continue.
 
 def add_tag(tags, metadata, read_name, write_name):
-    if read_name in tags.tags:
+    if tags.tags and read_name in tags.tags:
         tag = tags.tags[read_name]
         tag = tag[0]
 
@@ -86,7 +86,7 @@ def add_tag(tags, metadata, read_name, write_name):
         metadata.write("%s\n" % tag)
 
 def write_albumart(tags, metadata, name):
-    if name in tags.tags:
+    if tags.tags and name in tags.tags:
         image_file = os.path.join(cache_folder, cache_hash + ".orig")
         image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
 
