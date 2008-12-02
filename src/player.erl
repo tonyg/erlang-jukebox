@@ -185,10 +185,6 @@ init(_Args) ->
     process_flag(trap_exit, true), %% so that we get an opportunity to run terminate().
     {ok, act_on(load_state())}.
 
-get_secs() ->
-    {MegaSecs, Secs, _} = erlang:now(),
-    MegaSecs * 1000000 + Secs.
-
 handle_call({enqueue, AtTop, Q}, _From, State) ->
     Q1 = expand_m3us_and_cache(Q),
     Q2 = case AtTop of
