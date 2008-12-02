@@ -66,6 +66,10 @@ function clock_timer_tick() {
 		elapsedTime ++;
 		if (elapsedTime > totalTime) {
 		    elapsedTime = totalTime;
+
+		    // Clear the timeout before calling
+		    // refresh_timer_tick, since that sets it.
+		    clearTimeout(refresh_timer);
 		    refresh_timer_tick();
 		}
 		update_time();
