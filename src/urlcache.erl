@@ -31,10 +31,10 @@ get_info(Url) ->
             [StatusLine | Lines] = string:tokens(binary_to_list(File), "\r\n"),
 	    case StatusLine of
 		"+" ++ _ ->
-            dict:from_list(tupleise(Lines, []));
+		    dict:from_list(tupleise(Lines, []));
 		"-" ++ _ ->
-            jukebox:log_error("urlcache",
-                      [{"metadata_error", list_to_binary(Lines)}]),
+		    jukebox:log_error("urlcache",
+				      [{"metadata_error", list_to_binary(Lines)}]),
 		    dict:new()
 	    end
     end.
@@ -128,9 +128,10 @@ download_and_cache(CachePid, Filename, Url) ->
 					   [{"curl_command", list_to_binary(CommandString)},
 					    {"curl_error", list_to_binary(ErrorText)}])
 	    end,
-	    CommandString2 = jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
-                         filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
-                         local_name_prefix(Url),
+	    CommandString2 =
+		jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
+		filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
+		local_name_prefix(Url),
 	    case os:cmd(CommandString2) of
 		"" -> ok;
 		MetadataOutput ->
