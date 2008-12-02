@@ -46,31 +46,34 @@ clear_queue() -> gen_server:call(player, clear_queue).
 
 -record(state, {status, is_paused, current_entry, queue, elapsed_acc, last_et_event}).
 
+reset_play_time(State) ->
+    State#state{elapsed_acc = 0,
+		last_et_event = erlang:now()}.
+
 act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
     case queue:out(TQ) of
 	{empty, _} -> State;
 	{{value, Entry=#entry{url = Url}}, TQ1} ->
-	    State#state{status = cache(Url, IsPaused),
-			current_entry = Entry,
-			queue = TQ1,
-			elapsed_acc = 0,
-			last_et_event = get_secs()}
+	    reset_play_time(State#state{status = cache(Url, IsPaused),
+					current_entry = Entry,
+					queue = TQ1})
     end;
 act_on(State) -> State.
 
-summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused,
-                               elapsed_acc = ElapsedAcc, last_et_event = LastEtEvent}) ->
+elapsed_time(#state{is_paused = true,
+		    elapsed_acc = ElapsedAcc}) ->
+    ElapsedAcc;
+elapsed_time(#state{is_paused = false,
+		    elapsed_acc = ElapsedAcc,
+		    last_et_event = LastEtEvent}) ->
+    ElapsedAcc + (timer:now_diff(erlang:now(), LastEtEvent) / 1000000).
+
+summarise_state(State = #state{queue = Q, current_entry = Entry, is_paused = IsPaused}) ->
     StatusSymbol = case State#state.status of
 		       idle -> idle;
 		       {Other, _PlayerDetails} -> Other
 		   end,
-    case IsPaused of
-        true ->
-            Elapsed = ElapsedAcc;
-        false ->
-            Elapsed = ElapsedAcc + get_secs() - LastEtEvent
-    end,
-    {StatusSymbol, Q, Entry, IsPaused, Elapsed}.
+    {StatusSymbol, Q, Entry, IsPaused, elapsed_time(State)}.
 
 act_and_reply(State) ->
     State1 = act_on(State),
@@ -160,10 +163,8 @@ save_state(#state{queue = Q}) ->
     file:write_file("ejukebox.state", rfc4627:encode({obj, [{"queue", tqueue:to_json(Q)}]})).
 
 clean_state() ->
-    make_idle(#state{is_paused = false,
-		     queue = queue:new(),
-		     elapsed_acc = 0,
-		     last_et_event = 0}).
+    make_idle(reset_play_time(#state{is_paused = false,
+				     queue = queue:new()})).
 
 load_state() ->
     State = case file:read_file("ejukebox.state") of
@@ -209,19 +210,12 @@ handle_call(skip, _From, State) ->
     {reply, {ok, SkippedEntry, summarise_state(NewState)}, NewState};
 handle_call({pause, On}, _From, State) ->
     case State#state.status of
-	{playing, PlayerPid} -> 
-	    send_pause(PlayerPid, On),
-	    case On of 
-		true ->
-		    NewAcc = State#state.elapsed_acc + get_secs() - State#state.last_et_event;
-		false ->
-		    NewAcc = State#state.elapsed_acc
-	    end;
-	_ -> 
-	    NewAcc = State#state.elapsed_acc,
-	    ok
+	{playing, PlayerPid} -> send_pause(PlayerPid, On);
+	_ -> ok
     end,
-    act_and_reply(State#state{is_paused = On, elapsed_acc = NewAcc, last_et_event = get_secs()});
+    act_and_reply(State#state{is_paused = On,
+			      elapsed_acc = elapsed_time(State),
+			      last_et_event = erlang:now()});
 handle_call(clear_queue, _From, State) ->
     act_and_reply(State#state{queue = queue:new()}).
 
@@ -237,7 +231,9 @@ handle_info({urlcache, ok, ReceivedRef, LocalFileName},
 	    State = #state{status = {caching, {Template, CacheRef}},
 			   is_paused = IsPaused})
   when ReceivedRef =:= CacheRef ->
-    {noreply, act_on(State#state{status = play(Template, LocalFileName, IsPaused)})};
+    {noreply, act_on(reset_play_time(State#state{status = play(Template,
+							       LocalFileName,
+							       IsPaused)}))};
 handle_info({'EXIT', _Pid, normal}, State) ->
     {noreply, State};
 handle_info(Msg, State) ->

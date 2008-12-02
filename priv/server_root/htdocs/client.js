@@ -156,6 +156,8 @@ function timeFormat(seconds) {
         return num < 10 ? "0" + num : num;
     }
 
+    seconds = Math.floor(seconds);
+
     return (seconds >= 3600 ? pad(Math.floor(seconds / 3600)) + ":" : "")
 	+ pad(Math.floor(seconds / 60)) + ":"
 	+ pad(seconds % 60);
