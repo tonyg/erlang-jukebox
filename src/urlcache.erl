@@ -120,7 +120,7 @@ download_and_cache(CachePid, Filename, Url) ->
 	    ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
-	    CommandString = "curl -g -s -S -C - -o "++PartFilename++" "++quote_for_shell(Url),
+	    CommandString = "curl -f -g -s -S -C - -o "++PartFilename++" "++quote_for_shell(Url),
 	    case os:cmd(CommandString) of
 		"" ->
 		    ok = try_rename(PartFilename, Filename, 5, no_previous_error);
