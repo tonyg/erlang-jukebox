@@ -23,11 +23,12 @@ supports_extension(Extension) ->
 
 player_mapping(E) -> player_mapping1(http_util:to_lower(E)).
 
-player_mapping1(".ogg") -> {ok, ["/usr/bin/env", "cvlc", "--play-and-exit", url]};
-player_mapping1(".mp3") -> {ok, ["/usr/bin/env", "cvlc", "--play-and-exit", url]};
-player_mapping1(".m4a") -> {ok, ["/usr/bin/env", "cvlc", "--play-and-exit", url]};
-player_mapping1(".wav") -> {ok, ["/usr/bin/env", "cvlc", "--play-and-exit", url]};
-player_mapping1(".flac") -> {ok, ["/usr/bin/env", "cvlc", "--play-and-exit", url]};
+-define(VLC_PLAYER_MAPPING, {ok, ["/usr/bin/env", "vlc", "--intf", "dummy", url, "vlc:quit"]}).
+player_mapping1(".ogg") -> ?VLC_PLAYER_MAPPING;
+player_mapping1(".mp3") -> ?VLC_PLAYER_MAPPING;
+player_mapping1(".m4a") -> ?VLC_PLAYER_MAPPING;
+player_mapping1(".wav") -> ?VLC_PLAYER_MAPPING;
+player_mapping1(".flac") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".m3u") -> playlist;
 player_mapping1(_) -> not_playable.
 
