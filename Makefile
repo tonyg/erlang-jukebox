@@ -21,13 +21,13 @@ ERL_CMD=erl \
 	+W w \
 	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
 
-# You will need debian-multimedia / medibuntu for aacgain
-install_dependencies_debian:
-	sudo apt-get install curl vlc mp3gain vorbisgain aacgain flac imagemagick
-
 all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 	make -C priv/execdaemon
 	make -C $(IBROWSE_SOURCE_DIR)
+
+# You will need debian-multimedia / medibuntu for aacgain
+install_dependencies_debian:
+	sudo apt-get install curl vlc mp3gain vorbisgain aacgain flac imagemagick
 
 $(IBROWSE_EBIN_DIR):
 	mkdir $(IBROWSE_EBIN_DIR)
