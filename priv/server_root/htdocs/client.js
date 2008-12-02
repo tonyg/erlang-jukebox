@@ -85,8 +85,10 @@ function arm_clock_timer() {
 function update_time() {
     var s = document.getElementById("statusatom");
     var pausedString = paused ? ", paused" : "";
-    var timeString = state == "idle" ? "" : 
-        (" " + timeFormat(elapsedTime) + " / " + timeFormat(totalTime));
+    var timeString =
+	state == "playing"
+	? (" " + timeFormat(elapsedTime) + " / " + timeFormat(totalTime))
+	: "";
 
     s.innerHTML = "";
     s.appendChild(document.createTextNode("Now playing (" + state + 
@@ -95,11 +97,9 @@ function update_time() {
 
 function update_player_status(status) {
     state = status.status;
-    if (state != "idle") {
-	paused = status.paused;
-	elapsedTime = status.elapsedTime;
-	totalTime = status.info.totalTime;
-    }
+    paused = status.paused;
+    elapsedTime = status.elapsedTime;
+    totalTime = status.info ? status.info.totalTime : 0;
     update_time();
 
     var n = document.getElementById("nowplaying");
@@ -272,6 +272,8 @@ function ButtonWidget(caption) {
 }
 
 function LargeTrackWidget(entry, info, size) {
+    info = info || {};
+
     this.track = entry;
 
     this.domNode = document.createElement("span");
