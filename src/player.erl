@@ -53,8 +53,8 @@ act_on(State=#state{status = idle, is_paused = IsPaused, queue = TQ}) ->
 	    State#state{status = cache(Url, IsPaused),
 			current_entry = Entry,
 			queue = TQ1,
-            elapsed_acc = 0,
-            last_et_event = get_secs()}
+			elapsed_acc = 0,
+			last_et_event = get_secs()}
     end;
 act_on(State) -> State.
 
@@ -108,13 +108,12 @@ expand_m3us([], Acc) ->
     lists:flatten(lists:reverse(Acc));
 expand_m3us([TQEntry|Tail], Acc) ->
     Url = TQEntry#entry.url,
-    TQEntry2 = 
-    case string:right(Url, 4) of
-	".m3u" ->
-	    fetch_m3u(Url, TQEntry#entry.username);
-	_Else ->
-	    TQEntry
-    end,
+    TQEntry2 = case string:right(Url, 4) of
+		   ".m3u" ->
+		       fetch_m3u(Url, TQEntry#entry.username);
+		   _Else ->
+		       TQEntry
+	       end,
     expand_m3us(Tail, [TQEntry2|Acc]).
 
 fetch_m3u(Url, Username) ->
@@ -163,8 +162,8 @@ save_state(#state{queue = Q}) ->
 clean_state() ->
     make_idle(#state{is_paused = false,
 		     queue = queue:new(),
-             elapsed_acc = 0,
-             last_et_event = 0}).
+		     elapsed_acc = 0,
+		     last_et_event = 0}).
 
 load_state() ->
     State = case file:read_file("ejukebox.state") of
@@ -211,16 +210,16 @@ handle_call(skip, _From, State) ->
 handle_call({pause, On}, _From, State) ->
     case State#state.status of
 	{playing, PlayerPid} -> 
-        send_pause(PlayerPid, On),
-        case On of 
-            true ->
-                NewAcc = State#state.elapsed_acc + get_secs() - State#state.last_et_event;
-            false ->
-                NewAcc = State#state.elapsed_acc
-        end;
-    _ -> 
-        NewAcc = State#state.elapsed_acc,
-        ok
+	    send_pause(PlayerPid, On),
+	    case On of 
+		true ->
+		    NewAcc = State#state.elapsed_acc + get_secs() - State#state.last_et_event;
+		false ->
+		    NewAcc = State#state.elapsed_acc
+	    end;
+	_ -> 
+	    NewAcc = State#state.elapsed_acc,
+	    ok
     end,
     act_and_reply(State#state{is_paused = On, elapsed_acc = NewAcc, last_et_event = get_secs()});
 handle_call(clear_queue, _From, State) ->
