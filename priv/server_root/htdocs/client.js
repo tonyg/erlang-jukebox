@@ -122,9 +122,8 @@ function update_player_status(status) {
 	var track = status.queue[i];
 	var info = status.queueInfo[i];
 	var itemnode = document.createElement("li");
-        var span = document.createElement("span");
-        span.className = "queue-buttons";
-	itemnode.appendChild(span);
+	var span = document.createElement("span");
+	span.className = "queue-buttons";
 	span.appendChild(button(dequeuer_for(track), "dequeue",
 				"imageButton dequeueButton",
 				"Dequeue track"));
@@ -136,7 +135,10 @@ function update_player_status(status) {
 	span.appendChild(button(lowerer_for(track), "down",
 				"imageButton downButton",
 				"Move track later in queue"));
-	itemnode.appendChild(new LargeTrackWidget(track, info, "small").domNode);
+	itemnode.appendChild(span);
+	itemnode.appendChild((i < 3)
+			     ? new LargeTrackWidget(track, info, "small").domNode
+			     : new TrackWidget(track).domNode);
 	if (currentDownloads[track.url]) {
 	    itemnode.appendChild(textSpan(" (caching)", "cachingIndicator"));
 	}
@@ -273,17 +275,17 @@ function ButtonWidget(caption) {
     this.domNode.innerHTML = caption;
 }
 
-function LargeTrackWidget(entry, info, size) {
+function LargeTrackWidget(track, info, size) {
     info = info || {};
 
-    this.track = entry;
+    this.track = track;
 
     this.domNode = document.createElement("span");
-    this.domNode.className = "jukebox-track-" + size;
+    this.domNode.className = "jukeboxTrack jukebox-track-" + size;
 
     var partHtml = '<span class="finalUrlPart">';    
     partHtml += '<span class="img-holder">';
-    
+
     if (info.albumArt) {
         partHtml += '<img src="cache/' + info.cacheHash + '.jpeg"/>';
     }
@@ -319,12 +321,6 @@ function TrackWidget(track) {
     this.domNode = document.createElement("span");
     this.domNode.className = "jukeboxTrack";
 
-    var linknode = document.createElement("a");
-    linknode.className = "trackUrlLink";
-    linknode.href = this.track.url;
-    linknode.appendChild(document.createTextNode("(...)"));
-    this.domNode.appendChild(linknode);
-
     var abbrnode = document.createElement("abbr");
     abbrnode.title = unescape(this.track.url);
     abbrnode.appendChild(document.createTextNode(short_url(this.track.url)));
@@ -334,6 +330,12 @@ function TrackWidget(track) {
     partnode.className = "finalUrlPart";
     partnode.appendChild(abbrnode);
     this.domNode.appendChild(partnode);
+
+    var linknode = document.createElement("a");
+    linknode.className = "trackUrlLink";
+    linknode.href = this.track.url;
+    linknode.appendChild(document.createTextNode("(...)"));
+    this.domNode.appendChild(linknode);
 
     if (this.track.username) {
 	this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));

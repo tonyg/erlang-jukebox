@@ -112,29 +112,37 @@ abbr {
     border: none;
 }
 
-.queue-buttons {
-    display: block;
-    float: left;
+#statuspanel ol li {
     clear: both;
+}
+
+.queue-buttons {
+    float: left;
+}
+
+.jukeboxTrack {
+    margin-left: 10px;
+}
+
+.jukebox-track-large {
+    margin-left: 0px;
 }
 
 .jukebox-track-large .img-holder {
     float: left;
-    margin: 0 5px 0 0;
+    margin-right: 5px;
     width: 96px;
     height: 96px;
 }
 
 .jukebox-track-small {
-    float: left;
-    display: block;
-    margin: 0 0 2px 0;
+    margin-bottom: 2px;
 }
 
 .jukebox-track-small .img-holder {
-    display: block;
     float: left;
-    margin: 0 5px 0 0;
+    margin-left: 10px;
+    margin-right: 5px;
     width: 40px;
     height: 40px;
 }
