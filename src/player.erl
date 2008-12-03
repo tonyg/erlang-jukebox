@@ -126,7 +126,7 @@ fetch_m3u(Url, Username) ->
 	    {ok, Base, _Count} = regexp:sub(Url, "/[^/]*$", "/" %% " emacs balancer
 					   ),
 	    CurriedResolveRelative = fun(Relative) ->
-					     UrlEncRel = spider:url_encode(Relative),
+					     UrlEncRel = spider:url_encode_path(Relative),
 					     spider:resolve_relative(Base, UrlEncRel)
 				     end,
 	    CorrectUrls = lists:map(CurriedResolveRelative, Entries),

@@ -1,7 +1,9 @@
 -module(spider).
 
 -export([start_link/0]).
--export([spider/1, spider/2, url_encode/1, resolve_relative/2, retrieve/1, retrieve/2]).
+-export([spider/1, spider/2]).
+-export([url_encode_path/1, url_encode/1]).
+-export([resolve_relative/2, retrieve/1, retrieve/2]).
 
 start_link() ->
     ibrowse:start_link().
@@ -62,6 +64,30 @@ html_decode(S0) ->
     {ok, S3, _} = regexp:gsub(S2, "&quot;", "\""),
     {ok, S4, _} = regexp:gsub(S3, "&amp;", "\\&"),
     S4.
+
+%% Like url_encode, but leaves any "reserved characters" alone in
+%% the string as well.
+url_encode_path(Str) when list(Str) ->
+    url_encode_path_char(lists:reverse(Str), []).
+
+url_encode_path_char([X | T], Acc) when X >= $a, X =< $z ->
+    url_encode_path_char(T, [X | Acc]);
+url_encode_path_char([X | T], Acc) when X >= $A, X =< $Z ->
+    url_encode_path_char(T, [X | Acc]);
+url_encode_path_char([X | T], Acc) when X >= $0, X =< $9 ->
+    url_encode_path_char(T, [X | Acc]);
+url_encode_path_char([X | T], Acc)
+  when X == $-; X == $_; X == $.; X == $~;
+       X == $!; X == $*; X == $'; X == $(;
+       X == $); X == $;; X == $:; X == $@;
+       X == $&; X == $=; X == $+; X == $$;
+       X == $,; X == $/; X == $?; X == $%;
+       X == $#; X == $[; X == $] ->
+    url_encode_path_char(T, [X | Acc]);
+url_encode_path_char([X | T], Acc) ->
+    url_encode_path_char(T, [$%, d2h(X bsr 4), d2h(X band 16#0f) | Acc]);
+url_encode_path_char([], Acc) ->
+    Acc.
 
 %% url_encode is lifted from ibrowse, and modified to include digits
 %% and tilde.
