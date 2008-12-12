@@ -272,3 +272,13 @@ dd {
 span.rootCount {
     font-family: mono;
 }
+
+#history .when {
+    display:block;
+    font-size: 0.8em;
+    color: #888;
+}
+
+#history .who {
+    font-weight: bold;
+}

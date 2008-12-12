@@ -184,6 +184,12 @@ function update_history(entries) {
 	var entry = entries[i];
 	var itemnode = document.createElement("li");
 
+	var whennode = document.createElement("span");
+	whennode.className = "when";
+    var date = new Date();
+    date.setTime(entry.when * 1000); // JS wants millis, erlang:now() gives seconds
+	whennode.appendChild(document.createTextNode(format_date(date)));
+
 	var whonode = document.createElement("span");
 	whonode.className = "who";
 	whonode.appendChild(document.createTextNode(entry.who));
@@ -201,6 +207,8 @@ function update_history(entries) {
 	    whatnode.appendChild(document.createTextNode(JSON.stringify(entry.error)));
 	}
 
+	itemnode.appendChild(whennode);
+	itemnode.appendChild(document.createTextNode(" "));
 	itemnode.appendChild(whonode);
 	itemnode.appendChild(document.createTextNode(" "));
 	itemnode.appendChild(whatnode);
@@ -212,6 +220,19 @@ function update_history(entries) {
     h.innerHTML = "";
     h.appendChild(listnode);
     h.scrollTop = 10000; // a big number - meaning "as far as possible"
+}
+
+function format_date(date) {
+    var time = date.toLocaleTimeString();
+
+    var now = new Date();
+    if (date.getDate() != now.getDate() || 
+        date.getMonth() != now.getMonth() || 
+        date.getFullYear() != now.getFullYear()) {
+        time += " (" + date.toLocaleDateString() + ")";
+    }
+
+    return time;
 }
 
 var current_volume = 0;

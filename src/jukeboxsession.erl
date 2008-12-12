@@ -68,9 +68,10 @@ summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
 
 history_to_json(H) ->
-    lists:map(fun ({Who, {What, Entry}}) ->
+    lists:map(fun ({Who, {What, Entry}, When}) ->
 		      {obj, [{"who", list_to_binary(Who)},
-			     {"what", list_to_binary(atom_to_list(What))}
+			     {"what", list_to_binary(atom_to_list(What))},
+			     {"when", When}
 			     | Entry]}
 	      end, H).
 

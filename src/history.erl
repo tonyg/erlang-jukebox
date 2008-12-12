@@ -23,7 +23,8 @@ init([Maxlength]) ->
 handle_call({retrieve, N}, _From, State={_Maxlength, History}) ->
     {reply, lists:sublist(History, 1, N), State};
 handle_call({record, Who, What}, _From, _State={Maxlength, History}) ->
-    {reply, ok, {Maxlength, lists:sublist([{Who, What} | History], 1, Maxlength)}};
+    {Mega, Sec, _} = now(),
+    {reply, ok, {Maxlength, lists:sublist([{Who, What, Mega * 1000000 + Sec} | History], 1, Maxlength)}};
 handle_call(reset, _From, _State={Maxlength, _History}) ->
     {reply, ok, {Maxlength, []}}.
 
