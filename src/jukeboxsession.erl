@@ -56,17 +56,12 @@ summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
     CurrentDownloads = urlcache:current_downloads(),
     {obj, [{"status", list_to_binary(atom_to_list(StateSymbol))},
 	   {"entry", tqueue:entry_to_json(Entry)},
-	   {"info",  urlcache:info_to_json(info_for_entry(Entry))},
+	   {"info",  urlcache:info_to_json(urlcache:get_info(Entry))},
 	   {"queue", tqueue:to_json(Q)},
        {"queueInfo",  urlcache:queue_info_json(Q)},
 	   {"paused", IsPaused},
 	   {"elapsedTime", ElapsedTime},
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
-
-info_for_entry(null) ->
-    null;
-info_for_entry(_Entry=#entry{url=Url}) ->
-    urlcache:get_info(Url).
 
 history_to_json(H) ->
     lists:map(fun ({Who, {What, Entry}, When}) ->
@@ -126,7 +121,7 @@ handle_call({jsonrpc, <<"get_queue">>, _RequestInfo, []}, _From, State) ->
 handle_call({jsonrpc, <<"skip">>, _RequestInfo, [Who]}, _From, State) ->
     {ok, SkippedTrack, NewState} = player:skip(),
     log(binary_to_list(Who), skip, [{track, tqueue:entry_to_json(SkippedTrack)},
-                                    {info,  urlcache:info_to_json(info_for_entry(SkippedTrack))}]),
+                                    {info,  urlcache:info_to_json(urlcache:get_info(SkippedTrack))}]),
     {reply, {result, summary_to_json(NewState)}, State};
 
 handle_call({jsonrpc, <<"pause">>, _RequestInfo, [Pause]}, _From, State) ->
@@ -142,7 +137,7 @@ handle_call({jsonrpc, <<"chat">>, _RequestInfo, [Who, Message]}, _From, State) -
     {_StateSymbol, _Q, Entry, _IsPaused, _ElapsedTime} = player:get_queue(),
     log(binary_to_list(Who), says, [{message, Message},
                                     {track, tqueue:entry_to_json(Entry)},
-                                    {info,  urlcache:info_to_json(info_for_entry(Entry))}]),
+                                    {info,  urlcache:info_to_json(urlcache:get_info(Entry))}]),
     {reply, {result, true}, State};
 
 handle_call({jsonrpc, <<"get_volume">>, _RequestInfo, []}, _From, State) ->
