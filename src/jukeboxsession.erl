@@ -125,7 +125,8 @@ handle_call({jsonrpc, <<"get_queue">>, _RequestInfo, []}, _From, State) ->
 
 handle_call({jsonrpc, <<"skip">>, _RequestInfo, [Who]}, _From, State) ->
     {ok, SkippedTrack, NewState} = player:skip(),
-    log(binary_to_list(Who), skip, [{track, tqueue:entry_to_json(SkippedTrack)}]),
+    log(binary_to_list(Who), skip, [{track, tqueue:entry_to_json(SkippedTrack)},
+                                    {info,  urlcache:info_to_json(info_for_entry(SkippedTrack))}]),
     {reply, {result, summary_to_json(NewState)}, State};
 
 handle_call({jsonrpc, <<"pause">>, _RequestInfo, [Pause]}, _From, State) ->
