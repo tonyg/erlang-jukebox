@@ -86,12 +86,16 @@ def add_tag(tags, metadata, read_name, write_name):
         metadata.write("%s\n" % tag.encode("utf-8"))
 
 def write_albumart(tags, metadata, name):
-    if tags.tags and name in tags.tags:
+    if tags.tags:
+        images = tags.tags.getall('APIC')
+        if len(images) == 0:
+            return
+        
         image_file = os.path.join(cache_folder, cache_hash + ".orig")
         image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
 
         with open(image_file, "w") as image: 
-            image.write(tags.tags[name].data)
+            image.write(images[0].data)
 
         try:
             subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled])
@@ -134,7 +138,7 @@ def write_metadata():
             add_tag(tags, metadata, "TALB", "albumTitle")
             add_tag(tags, metadata, "TIT2", "trackName")
             add_tag(tags, metadata, "TRCK", "trackNumber")
-            write_albumart(tags, metadata, "APIC:Front Cover")
+            write_albumart(tags, metadata, "APIC")
     
         else:
             add_tag(tags, metadata, "artist", "artistName")
