@@ -54,18 +54,19 @@ default_name(IpAddr) ->
 
 summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
     CurrentDownloads = urlcache:current_downloads(),
-    Url = case Entry of
-              null -> null;
-              _ -> Entry#entry.url
-          end,
     {obj, [{"status", list_to_binary(atom_to_list(StateSymbol))},
 	   {"entry", tqueue:entry_to_json(Entry)},
-	   {"info",  urlcache:info_to_json(urlcache:get_info(Url))},
+	   {"info",  urlcache:info_to_json(info_for_entry(Entry))},
 	   {"queue", tqueue:to_json(Q)},
        {"queueInfo",  urlcache:queue_info_json(Q)},
 	   {"paused", IsPaused},
 	   {"elapsedTime", ElapsedTime},
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
+
+info_for_entry(null) ->
+    null;
+info_for_entry(_Entry=#entry{url=Url}) ->
+    urlcache:get_info(Url).
 
 history_to_json(H) ->
     lists:map(fun ({Who, {What, Entry}, When}) ->
@@ -137,7 +138,10 @@ handle_call({jsonrpc, <<"get_history">>, _RequestInfo, [EntryCount]}, _From, Sta
     {reply, {result, history_to_json(history:retrieve(history, EntryCount))}, State};
 
 handle_call({jsonrpc, <<"chat">>, _RequestInfo, [Who, Message]}, _From, State) ->
-    log(binary_to_list(Who), says, [{message, Message}]),
+    {_StateSymbol, _Q, Entry, _IsPaused, _ElapsedTime} = player:get_queue(),
+    log(binary_to_list(Who), says, [{message, Message},
+                                    {track, tqueue:entry_to_json(Entry)},
+                                    {info,  urlcache:info_to_json(info_for_entry(Entry))}]),
     {reply, {result, true}, State};
 
 handle_call({jsonrpc, <<"get_volume">>, _RequestInfo, []}, _From, State) ->

@@ -197,12 +197,19 @@ function update_history(entries) {
 	var whatnode = document.createElement("span");
 	whatnode.className = "what";
 	whatnode.appendChild(document.createTextNode(entry.what + " "));
-	if (entry.track) {
-	    whatnode.appendChild(new TrackWidget(entry.track).domNode);
-	}
+
 	if (entry.message) {
 	    whatnode.appendChild(document.createTextNode('"' + entry.message + '"'));
 	}
+
+	if (entry.message && entry.track ) {
+	    whatnode.appendChild(document.createTextNode(' while listening to '));
+	}
+
+	if (entry.track) {
+	    whatnode.appendChild(new TrackWidget(entry.track).domNode);
+	}
+
 	if (entry.error) {
 	    whatnode.appendChild(document.createTextNode(JSON.stringify(entry.error)));
 	}
