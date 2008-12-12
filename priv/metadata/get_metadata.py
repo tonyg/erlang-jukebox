@@ -83,7 +83,7 @@ def add_tag(tags, metadata, read_name, write_name):
             (tag, _ignore) = tag
 
         metadata.write("%s\n" % write_name)
-        metadata.write("%s\n" % tag)
+        metadata.write("%s\n" % tag.encode("utf-8"))
 
 def write_albumart(tags, metadata, name):
     if tags.tags and name in tags.tags:
