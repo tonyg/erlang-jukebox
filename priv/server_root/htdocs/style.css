@@ -125,7 +125,24 @@ abbr {
 }
 
 #history .jukeboxTrack {
-    margin-left: 0;    
+    margin-left: 0;
+}
+
+#history .while-listening {
+    font-size: 0.8em;
+    color: grey;
+}
+
+#history .skip {
+    background: yellow;
+    font-weight: bold;
+    padding: 2px;
+}
+
+#history .error {
+    font-size: 0.8em;
+    color: grey;
+    font-family: monospace;
 }
 
 .jukebox-track-large {

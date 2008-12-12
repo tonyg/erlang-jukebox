@@ -196,23 +196,27 @@ function update_history(entries) {
 
 	var whatnode = document.createElement("span");
 	whatnode.className = "what";
-	whatnode.appendChild(document.createTextNode(entry.what + " "));
+
+	var whatHTML;
 
 	if (entry.message) {
-	    whatnode.appendChild(document.createTextNode('"' + entry.message + '"'));
+	    whatHTML = entry.what + ' "' + entry.message + '"';
+
+        if (entry.track) {
+	        whatHTML += '<span class="while-listening"> while listening to '
+                     + new TrackWidget(entry.track, entry.info).domNode.innerHTML
+                     + '</span>';
+        }
+
+	} else if (entry.what == 'skip') {
+	    whatHTML = ' <span class="skip">skip</span> ' 
+                 + new TrackWidget(entry.track, entry.info).domNode.innerHTML;
+
+	} else if (entry.error) {
+	    whatHTML = '<span class="error">' + JSON.stringify(entry.error) + '</span>';
 	}
 
-	if (entry.message && entry.track ) {
-	    whatnode.appendChild(document.createTextNode(' while listening to '));
-	}
-
-	if (entry.track) {
-	    whatnode.appendChild(new TrackWidget(entry.track, entry.info).domNode);
-	}
-
-	if (entry.error) {
-	    whatnode.appendChild(document.createTextNode(JSON.stringify(entry.error)));
-	}
+    whatnode.innerHTML = whatHTML;
 
 	itemnode.appendChild(whennode);
 	itemnode.appendChild(document.createTextNode(" "));
