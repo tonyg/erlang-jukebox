@@ -138,7 +138,7 @@ function update_player_status(status) {
 	itemnode.appendChild(span);
 	itemnode.appendChild((i < 3)
 			     ? new LargeTrackWidget(track, info, "small").domNode
-			     : new TrackWidget(track).domNode);
+			     : new TrackWidget(track, info).domNode);
 	if (currentDownloads[track.url]) {
 	    itemnode.appendChild(textSpan(" (caching)", "cachingIndicator"));
 	}
@@ -207,7 +207,7 @@ function update_history(entries) {
 	}
 
 	if (entry.track) {
-	    whatnode.appendChild(new TrackWidget(entry.track).domNode);
+	    whatnode.appendChild(new TrackWidget(entry.track, entry.info).domNode);
 	}
 
 	if (entry.error) {
@@ -343,27 +343,30 @@ function LargeTrackWidget(track, info, size) {
     }
 }
 
-function TrackWidget(track) {
+function TrackWidget(track, info) {
+    info = info || {};
+
     this.track = track;
 
     this.domNode = document.createElement("span");
     this.domNode.className = "jukeboxTrack";
 
-    var abbrnode = document.createElement("abbr");
-    abbrnode.title = unescape(this.track.url);
-    abbrnode.appendChild(document.createTextNode(short_url(this.track.url)));
-    abbrnode.appendChild(document.createTextNode(" "));
+    var partHtml = '<span class="finalUrlPart">';
+    partHtml += '<abbr title="' + unescape(this.track.url) + '">';
+    
+    if (info.trackName) {
+        partHtml += info.trackName;
+        if (info.artistName) partHtml += ' - ' + info.artistName;
+        partHtml += '<a href="' + this.track.url + '" class="trackUrlLink">(...)</a>';
+    } else {
+        partHtml += short_url(this.track.url);
+        partHtml += '<a href="' + this.track.url + '" class="trackUrlLink">(...)</a>';
+    }
 
-    var partnode = document.createElement("span");
-    partnode.className = "finalUrlPart";
-    partnode.appendChild(abbrnode);
-    this.domNode.appendChild(partnode);
+    partHtml += '</abbr>';
+    partHtml += '</span>';
 
-    var linknode = document.createElement("a");
-    linknode.className = "trackUrlLink";
-    linknode.href = this.track.url;
-    linknode.appendChild(document.createTextNode("(...)"));
-    this.domNode.appendChild(linknode);
+    this.domNode.innerHTML = partHtml;
 
     if (this.track.username) {
 	this.domNode.appendChild(textSpan(" (" + this.track.username + ")", "trackUsername"));
@@ -417,7 +420,7 @@ function display_search_results(ungrouped_results, divnode) {
 	    itemnode.appendChild(button(enqueuer_for([track], true), "@top",
 					"imageButton atTopButton",
 					"Prepend track to queue"));
-	    itemnode.appendChild(new TrackWidget(track).domNode);
+	    itemnode.appendChild(new TrackWidget(track, null).domNode);
 	    listnode.appendChild(itemnode);
 	}
 
