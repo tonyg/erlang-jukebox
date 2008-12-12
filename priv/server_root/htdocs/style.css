@@ -124,6 +124,10 @@ abbr {
     margin-left: 10px;
 }
 
+#history .jukeboxTrack {
+    margin-left: 0;    
+}
+
 .jukebox-track-large {
     margin-left: 0px;
 }
@@ -274,7 +278,6 @@ span.rootCount {
 }
 
 #history .when {
-    display:block;
     font-size: 0.8em;
     color: #888;
 }
