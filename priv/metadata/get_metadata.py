@@ -96,13 +96,13 @@ def write_albumart(image_tag, metadata):
         image.write(image_tag.data)
 
     try:
-        subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled])
+        retcode = subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled], stderr=open("/dev/null"))
+        if retcode == 0:
+            metadata.write("albumArt\nYes\n")
     except:
          pass #It's probably not installed. Do nothing.
         
     os.unlink(image_file)           
-    metadata.write("albumArt\nYes\n")
-
 
 def write_metadata():
     extension = sys.argv[1].lower()
