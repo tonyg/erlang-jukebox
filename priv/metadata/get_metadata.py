@@ -85,25 +85,23 @@ def add_tag(tags, metadata, read_name, write_name):
         metadata.write("%s\n" % write_name)
         metadata.write("%s\n" % unicode(tag).encode("utf-8"))
 
-def write_albumart(tags, metadata, name):
-    if tags.tags:
-        images = tags.tags.getall('APIC')
-        if len(images) == 0:
-            return
+def write_albumart(image_tag, metadata):
+    if not image_tag:
+        return
+
+    image_file = os.path.join(cache_folder, cache_hash + ".orig")
+    image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
+
+    with open(image_file, "w") as image: 
+        image.write(image_tag.data)
+
+    try:
+        subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled])
+    except:
+         pass #It's probably not installed. Do nothing.
         
-        image_file = os.path.join(cache_folder, cache_hash + ".orig")
-        image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
-
-        with open(image_file, "w") as image: 
-            image.write(images[0].data)
-
-        try:
-            subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled])
-        except:
-             pass #It's probably not installed. Do nothing.
-            
-        os.unlink(image_file)           
-        metadata.write("albumArt\nYes\n")
+    os.unlink(image_file)           
+    metadata.write("albumArt\nYes\n")
 
 
 def write_metadata():
@@ -131,14 +129,20 @@ def write_metadata():
             add_tag(tags, metadata, "\xa9alb", "albumTitle")
             add_tag(tags, metadata, "\xa9nam", "trackName")
             add_tag(tags, metadata, "trkn", "trackNumber")
-            write_albumart(tags, metadata, "covr")
+
+            if tags.tags:
+                write_albumart(tags.tags.get('covr'), metadata)
 
         elif extension == '.mp3':
             add_tag(tags, metadata, "TPE1", "artistName")
             add_tag(tags, metadata, "TALB", "albumTitle")
             add_tag(tags, metadata, "TIT2", "trackName")
             add_tag(tags, metadata, "TRCK", "trackNumber")
-            write_albumart(tags, metadata, "APIC")
+
+            if tags.tags:
+                images = tags.tags.getall('APIC')
+                if len(images) > 0:
+                    write_albumart(images[0], metadata)
     
         else:
             add_tag(tags, metadata, "artist", "artistName")
