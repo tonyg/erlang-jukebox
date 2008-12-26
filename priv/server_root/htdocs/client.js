@@ -214,6 +214,9 @@ function update_history(entries) {
 
 	} else if (entry.error) {
 	    whatHTML = '<span class="error">' + JSON.stringify(entry.error) + '</span>';
+
+	} else if (entry.http_error) {
+	    whatHTML = '<span class="http-error">' + entry.http_error.response_code + ' downloading ' + entry.http_error.url + '</span>';
 	}
 
     whatnode.innerHTML = whatHTML;

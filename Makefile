@@ -27,7 +27,7 @@ all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 
 # You will need debian-multimedia / medibuntu for aacgain
 install_dependencies_debian:
-	sudo apt-get install curl vlc mp3gain vorbisgain aacgain flac imagemagick
+	sudo apt-get install vlc mp3gain vorbisgain aacgain flac imagemagick
 
 $(IBROWSE_EBIN_DIR):
 	mkdir $(IBROWSE_EBIN_DIR)

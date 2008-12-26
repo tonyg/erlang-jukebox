@@ -104,16 +104,6 @@ try_rename(Source, Target, N, _PrevError) ->
 	    try_rename(Source, Target, N - 1, E)
     end.
 
-quote_for_shell(S) ->
-    "'" ++ quote_for_shell1(S).
-
-quote_for_shell1("") ->
-    "'";
-quote_for_shell1("'" ++ S) ->
-    "'\"'\"'" ++ quote_for_shell1(S);
-quote_for_shell1([Ch | S]) ->
-    [Ch | quote_for_shell1(S)].
-
 download_and_cache(CachePid, Filename, Url) ->
     case filelib:is_file(Filename) of
 	true ->
@@ -122,26 +112,27 @@ download_and_cache(CachePid, Filename, Url) ->
 	    ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
-	    CommandString = "curl -f -g -s -S -C - -o "++PartFilename++" "++quote_for_shell(Url),
-	    case os:cmd(CommandString) of
-		"" ->
-		    ok = try_rename(PartFilename, Filename, 5, no_previous_error);
-		ErrorText ->
-		    ok = jukebox:log_error("urlcache",
-					   [{"curl_command", list_to_binary(CommandString)},
-					    {"curl_error", list_to_binary(ErrorText)}])
-	    end,
-	    CommandString2 =
-		jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
-		filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
-		local_name_prefix(Url),
-	    case os:cmd(CommandString2) of
-		"" -> ok;
-		MetadataOutput ->
-		    jukebox:log_error("urlcache",
-				      [{"metadata_command", list_to_binary(CommandString2)},
-				       {"metadata_error", list_to_binary(MetadataOutput)}])
-	    end
+        case http:request(get, {Url, []}, [], [{stream, PartFilename}]) of
+        {ok, saved_to_file} ->
+            ok = try_rename(PartFilename, Filename, 5, no_previous_error),
+	        CommandString =
+		        jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
+		        filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
+		        local_name_prefix(Url),
+	        case os:cmd(CommandString) of
+		    "" -> ok;
+		    MetadataOutput ->
+		        jukebox:log_error("urlcache",
+				          [{"metadata_command", list_to_binary(CommandString)},
+				           {"metadata_error", list_to_binary(MetadataOutput)}])
+	        end;
+        {ok, {{_, ResponseCode, _}, _, _}} ->
+            file:write_file(local_metadata_name_for(Url), []), %% So that wait_for_completion will find it
+		    ok = jukebox:log_http_error(ResponseCode, Url);
+        {error, Error} ->
+            file:write_file(local_metadata_name_for(Url), []),
+		    ok = jukebox:log_http_error(Error, Url)
+        end
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
@@ -195,6 +186,7 @@ collect_current_downloads([_Other | Rest], Urls) ->
 %%---------------------------------------------------------------------------
 
 init(_Args) ->
+    inets:start(),
     {ok, none}.
 
 handle_call(current_downloads, _From, State) ->
@@ -215,6 +207,7 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
+    inets:stop(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

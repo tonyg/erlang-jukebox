@@ -139,6 +139,11 @@ abbr {
     padding: 2px;
 }
 
+#history .http-error {
+    color: red;
+    font-family: monospace;
+}
+
 #history .error {
     font-size: 0.8em;
     color: grey;
