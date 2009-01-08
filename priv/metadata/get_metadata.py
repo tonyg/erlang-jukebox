@@ -14,6 +14,17 @@ from mutagen.mp4 import MP4
 
 thumb_size = (96, 96)
 
+class WAV:
+    class Info:
+        def __init__(self, music_file):
+            # Assume that it's 44.1kHz stereo 16 bit. Anyone storing music as wav
+            # deserves anything they get.
+            self.length = os.path.getsize(music_file) / ( 2 * 2 * 44100) 
+
+    def __init__(self, music_file):
+        self.info = WAV.Info(music_file)
+        self.tags = None
+
 def get_tags(extension, music_file):
     if extension == '.mp3':
         tags = MP3(music_file)
@@ -23,6 +34,8 @@ def get_tags(extension, music_file):
         tags = FLAC(music_file)
     elif extension == '.m4a':
         tags = MP4(music_file)
+    elif extension == '.wav':
+        tags = WAV(music_file)
     return tags
 
 
@@ -58,6 +71,8 @@ def get_gain(extension, music_file):
 # If the file does not have a gain tag, try to add one. This is expensive, so we try
 # not to do it.
 def evaluate_gain(extension, music_file):
+    cmd = None
+
     if extension == '.mp3':
         cmd = ["mp3gain", "-T", music_file] # -T means modify existing file
     elif extension == '.ogg':
