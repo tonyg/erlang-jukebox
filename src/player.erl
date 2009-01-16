@@ -23,7 +23,8 @@ supports_extension(Extension) ->
 
 player_mapping(E) -> player_mapping1(http_util:to_lower(E)).
 
--define(VLC_PLAYER_MAPPING, {ok, ["/usr/bin/env", "vlc", "--intf", "dummy", url, "vlc://quit"]}).
+-define(VLC_PLAYER_MAPPING, {ok, ["/usr/bin/env", "vlc", "--intf", "dummy", "--audio-replay-gain-mode", "track", url, "vlc://quit"]}).
+
 player_mapping1(".ogg") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".mp3") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".m4a") -> ?VLC_PLAYER_MAPPING;
