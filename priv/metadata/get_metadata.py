@@ -84,8 +84,8 @@ def evaluate_gain(extension, music_file):
 
     if cmd:
         try:
-            subprocess.call(cmd, stdout="/dev/null")
-        except:
+            subprocess.call(cmd, stdout=open("/dev/null"), stderr=open("/dev/null"))
+        except OSError, e:
             pass # It's probably not installed. Just continue.
 
 def add_tag(tags, metadata, read_name, write_name):
