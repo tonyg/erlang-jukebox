@@ -23,6 +23,7 @@ current_downloads() ->
     gen_server:call(urlcache, current_downloads).
 
 get_info(null) -> null;
+get_info([]) -> null;
 get_info(_Entry=#entry{url=Url}) ->
     get_info(Url);
 get_info(Url) ->
