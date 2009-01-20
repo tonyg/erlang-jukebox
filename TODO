@@ -1,3 +1,5 @@
+- Figure out the race mentioned in commit c340a680a8ae
+
 - Give processes well-known names so I can run a
   jukebox-minus-database on my local machine and have it use a common
   index and spider running on a different machine
