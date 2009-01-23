@@ -22,32 +22,35 @@ cache(Url, Pid, Ref) ->
 current_downloads() ->
     gen_server:call(urlcache, current_downloads).
 
-get_info(null) -> null;
-get_info([]) -> null;
+get_info(null) -> dict:new();
 get_info(_Entry=#entry{url=Url}) ->
     get_info(Url);
 get_info(Url) ->
     MetadataFilename = local_metadata_name_for(Url),
     case file:read_file(MetadataFilename) of
-        {error,_} -> null;
-        {ok, File} ->
-            [StatusLine | Lines] = string:tokens(binary_to_list(File), "\r\n"),
-	    case StatusLine of
-		"+" ++ _ ->
-		    dict:from_list(tupleise(Lines, []));
-		"-" ++ _ ->
-		    jukebox:log_error("urlcache",
-				      [{"url", list_to_binary(Url)},
-				       {"metadata_error", list_to_binary(Lines)}]),
-		    dict:new()
-	    end
+    {error,_} -> dict:new();
+    {ok, File} ->
+        case catch parse_info(File) of
+        {'EXIT', _} ->
+            jukebox:log_error("urlcache",
+                      [{"url", list_to_binary(Url)},
+                       {"metadata_error", File}]),
+            dict:new();
+        Dict -> Dict
+        end
+    end.
+
+parse_info(File) ->
+    [StatusLine | Lines] = string:tokens(binary_to_list(File), "\r\n"),
+    case StatusLine of
+    "+" ++ _ ->
+        dict:from_list(tupleise(Lines, []))
     end.
 
 tupleise([], List) -> List;
 tupleise([Name, Value | Rest], List) -> 
     tupleise(Rest, [{Name, Value} | List]).
 
-info_to_json(null) -> null;
 info_to_json(Info) ->
     {obj, dict_to_json(Info, dict:fetch_keys(Info), [])}.
 
