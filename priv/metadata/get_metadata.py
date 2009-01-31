@@ -25,18 +25,31 @@ class WAV:
         self.info = WAV.Info(music_file)
         self.tags = None
 
+class NullTags:
+    class Info:
+        def __init__(self):
+            self.length = 0
+
+    def __init__(self):
+        self.info = NullTags.Info()
+        self.tags = None
+
 def get_tags(extension, music_file):
-    if extension == '.mp3':
-        tags = MP3(music_file)
-    elif extension == '.ogg':
-        tags = OggVorbis(music_file)
-    elif extension == '.flac':
-        tags = FLAC(music_file)
-    elif extension == '.m4a':
-        tags = MP4(music_file)
-    elif extension == '.wav':
-        tags = WAV(music_file)
-    return tags
+    try:
+        if extension == '.mp3':
+            tags = MP3(music_file)
+        elif extension == '.ogg':
+            tags = OggVorbis(music_file)
+        elif extension == '.flac':
+            tags = FLAC(music_file)
+        elif extension == '.m4a':
+            tags = MP4(music_file)
+        elif extension == '.wav':
+            tags = WAV(music_file)
+        return tags
+    except HeaderNotFoundError, e:
+        # Someone has uploaded a zero-length or badly corrupt file
+        return NullTags()
 
 
 def get_gain(extension, music_file):
