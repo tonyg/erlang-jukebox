@@ -17,30 +17,40 @@ set(NewVol) -> gen_server:call(volume, {set, NewVol}).
 
 %---------------------------------------------------------------------------
 
-hmix_get_volume() ->
-    Out = os:cmd("hmix | grep MASTER"),
-    case lists:prefix("MASTER", Out) of
+% TODO Parse the Limits: line to find MAX_VOL, configure DEVICE sensibly
+
+% Typical desktop machine
+%-define(MAX_VOL, 65536).
+%-define(DEVICE, "Master").
+
+% USB audio device on the real jukebox.
+-define(MAX_VOL, 44).
+-define(DEVICE, "Speaker").
+
+alsa_get_volume() -> 
+    Out = string:strip(os:cmd("amixer sget " ++ ?DEVICE ++ " | grep 'Front Left: Playback'")),
+    case lists:prefix("Front Left: Playback", Out) of
 	true ->
-	    {match, Start, Length} = regexp:match(Out, "[0-9]+"),
+	    {match, Start, Length} = regexp:first_match(Out, "[0-9]+"),
 	    VolStr = string:substr(Out, Start, Length),
-	    list_to_integer(VolStr);
+	    round(list_to_integer(VolStr) * 100 / ?MAX_VOL);
 	false ->
 	    null
     end.
 
-hmix_set_volume(NewVol) ->
-    os:cmd("hmix -master " ++ integer_to_list(NewVol)),
-    hmix_get_volume().
+alsa_set_volume(NewVol) ->
+    os:cmd("amixer sset " ++ ?DEVICE ++ " " ++ integer_to_list( round(NewVol * ?MAX_VOL / 100) )),
+    alsa_get_volume().
 
 init(_Args) ->
     {ok, unknown}.
 
 handle_call(Request, From, unknown) ->
-    handle_call(Request, From, hmix_get_volume());
+    handle_call(Request, From, alsa_get_volume());
 handle_call(get, _From, Volume) ->
     {reply, Volume, Volume};
 handle_call({set, VolArg}, _From, _Volume) ->
-    NewVol = hmix_set_volume(VolArg),
+    NewVol = alsa_set_volume(VolArg),
     {reply, NewVol, unknown}.
 
 handle_cast(_Message, State) ->
