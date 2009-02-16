@@ -11,6 +11,7 @@ from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp4 import MP4
+from mutagen.mp3 import HeaderNotFoundError
 
 thumb_size = (96, 96)
 
