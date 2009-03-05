@@ -32,10 +32,6 @@ function do_add_root() {
     e.value = "";
 }
 
-function do_snapshot() {
-    config.snapshot();
-}
-
 function rescanner_for(url) {
     return function () {
 	config.rescan_root(url).addCallback(update_rescans);

@@ -3,7 +3,6 @@
 
 -export([start_link/0]).
 
--export([snapshot/0]).
 -export([all_roots/0, current_rescans/0, remove_root/1, rescan_root/1, update_root/2]).
 -export([search_tracks/1, random_tracks/1]).
 
@@ -16,7 +15,6 @@
 start_link() ->
     gen_server:start_link({local, trackdb}, trackdb, [], []).
 
-snapshot() -> gen_server:call(trackdb, snapshot).
 all_roots() -> gen_server:call(trackdb, all_roots).
 current_rescans() -> gen_server:call(trackdb, current_rescans).
 remove_root(Url) -> gen_server:call(trackdb, {remove_root, Url}).
@@ -73,9 +71,6 @@ init(_Args) ->
 	{error, enoent} -> {ok, {[], #v2{roots = dict:new()}}}
     end.
 
-handle_call(snapshot, _From, S={_, State}) ->
-    {reply, file:write_file("ejukebox.db", term_to_binary(State)), S};
-
 handle_call(all_roots, _From, S={_, State}) ->
     {reply,
      lists:map(fun ({Url, {QLen, _Q}}) -> {Url, QLen} end,
@@ -92,8 +87,9 @@ handle_call({rescan_root, Url}, _From, {Rescans, State}) ->
     {reply, spawn(fun () -> rescanner(Url) end), {[Url | Rescans], State}};
 
 handle_call({update_root, Url, Q}, _From, {Rescans, State}) ->
-    {reply, ok, {lists:delete(Url, Rescans),
-		 State#v2{roots = dict:store(Url, {queue:len(Q), Q}, State#v2.roots)}}};
+    NewState = State#v2{roots = dict:store(Url, {queue:len(Q), Q}, State#v2.roots)},
+    file:write_file("ejukebox.db", term_to_binary(NewState)),
+    {reply, ok, {lists:delete(Url, Rescans), NewState}};
 
 handle_call({search_tracks, Keys}, From, S={_, State}) ->
     spawn(fun () -> searcher(From, Keys, State#v2.roots) end),

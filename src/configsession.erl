@@ -14,8 +14,7 @@ start_link() ->
 			       [{<<"current_rescans">>, []},
 				{<<"all_roots">>, []},
 				{<<"remove_root">>, [{"url", str}]},
-				{<<"rescan_root">>, [{"url", str}]},
-				{<<"snapshot">>, []}])),
+				{<<"rescan_root">>, [{"url", str}]}])),
     {ok, Pid}.
 
 %---------------------------------------------------------------------------
@@ -52,11 +51,7 @@ handle_call({jsonrpc, <<"remove_root">>, _RequestInfo, [Url]}, _From, State) ->
 
 handle_call({jsonrpc, <<"rescan_root">>, _RequestInfo, [Url]}, _From, State) ->
     trackdb:rescan_root(binary_to_list(Url)),
-    {reply, {result, lists_to_binaries(trackdb:current_rescans())}, State};
-
-handle_call({jsonrpc, <<"snapshot">>, _RequestInfo, []}, _From, State) ->
-    trackdb:snapshot(),
-    {reply, {result, true}, State}.
+    {reply, {result, lists_to_binaries(trackdb:current_rescans())}, State}.
 
 handle_cast(_Request, State) ->
     {noreply, State}.
