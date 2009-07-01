@@ -89,6 +89,11 @@ td#volume-indicator {
     text-align: left;
 }
 
+td#volume-who {
+    color: grey;
+    font-size: 66%;
+}
+
 span.parts span.p0 {
     background: yellow;
 }

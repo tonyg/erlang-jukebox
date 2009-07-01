@@ -63,6 +63,9 @@ summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
 	   {"elapsedTime", ElapsedTime},
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
 
+volume_to_json({Volume, Who, Direction}) ->
+    {obj, [{"volume", Volume}, {"who", list_to_binary(Who)}, {"direction", Direction}]}.
+
 history_to_json(H) ->
     lists:map(fun ({Who, {What, Entry}, When}) ->
 		      {obj, [{"who", list_to_binary(Who)},
@@ -141,10 +144,10 @@ handle_call({jsonrpc, <<"chat">>, _RequestInfo, [Who, Message]}, _From, State) -
     {reply, {result, true}, State};
 
 handle_call({jsonrpc, <<"get_volume">>, _RequestInfo, []}, _From, State) ->
-    {reply, {result, {obj, [{"volume", volume:get()}]}}, State};
+    {reply, {result, volume_to_json(volume:get())}, State};
 
-handle_call({jsonrpc, <<"set_volume">>, _RequestInfo, [NewVol]}, _From, State) ->
-    {reply, {result, {obj, [{"volume", volume:set(NewVol)}]}}, State}.
+handle_call({jsonrpc, <<"set_volume">>, _RequestInfo, [Who, NewVol]}, _From, State) ->
+    {reply, {result, volume_to_json(volume:set(binary_to_list(Who), NewVol))}, State}.
 
 handle_cast(_Request, State) ->
     {noreply, State}.

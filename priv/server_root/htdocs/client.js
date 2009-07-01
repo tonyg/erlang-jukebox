@@ -253,6 +253,7 @@ var current_volume = 0;
 function update_volume(result) {
     vol = result.volume;
     document.getElementById("volume").innerHTML = vol + "%";
+    document.getElementById("volume-who").innerHTML = result.who == "" ? "" : "(" + result.who + " " + result.direction + ")";
     document.getElementById("volume-tick-" + current_volume).className = "inactive-volume-tick";
     document.getElementById("volume-tick-" + vol).className = "active-volume-tick";
     current_volume = vol;
@@ -494,7 +495,7 @@ function send_chat() {
 
 function volume_setter_for(i) {
     return function () {
-	jb.set_volume(i).addCallback(update_volume);
+	jb.set_volume(currentUsername, i).addCallback(update_volume);
     };
 }
 

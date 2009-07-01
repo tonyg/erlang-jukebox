@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 -export([start_link/0]).
--export([get/0, set/1]).
+-export([get/0, set/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 %---------------------------------------------------------------------------
@@ -13,7 +13,7 @@ start_link() ->
 %---------------------------------------------------------------------------
 
 get() -> gen_server:call(volume, get).
-set(NewVol) -> gen_server:call(volume, {set, NewVol}).
+set(Who, NewVol) -> gen_server:call(volume, {set, Who, NewVol}).
 
 %---------------------------------------------------------------------------
 
@@ -43,15 +43,20 @@ alsa_set_volume(NewVol) ->
     alsa_get_volume().
 
 init(_Args) ->
-    {ok, unknown}.
+    {ok, {unknown, "", up}}.
 
-handle_call(Request, From, unknown) ->
-    handle_call(Request, From, alsa_get_volume());
-handle_call(get, _From, Volume) ->
-    {reply, Volume, Volume};
-handle_call({set, VolArg}, _From, _Volume) ->
+handle_call(Request, From, {unknown, Who, Direction}) ->
+    handle_call(Request, From, {alsa_get_volume(), Who, Direction});
+handle_call(get, _From, State) ->
+    {reply, State, State};
+handle_call({set, Who, VolArg}, _From, {OldVol, _Who, _Direction}) ->
     NewVol = alsa_set_volume(VolArg),
-    {reply, NewVol, unknown}.
+    Direction = 
+        case VolArg > OldVol of
+            true -> up;
+            false -> down
+        end,
+    {reply, {NewVol, Who, Direction}, {unknown, Who, Direction}}.
 
 handle_cast(_Message, State) ->
     {noreply, State}.
