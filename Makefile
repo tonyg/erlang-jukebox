@@ -10,6 +10,9 @@ IBROWSE_DIR=priv/ibrowse-1.0
 IBROWSE_SOURCE_DIR=$(IBROWSE_DIR)/src
 IBROWSE_EBIN_DIR=$(IBROWSE_DIR)/ebin
 
+RFC4627_DIR=../erlang-rfc4627
+RFC4627_EBIN_DIR=$(RFC4627_DIR)/ebin
+
 ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v +debug_info
 ERLC=erlc $(ERLC_OPTS)
 
@@ -19,7 +22,7 @@ ERL_CMD=erl \
 	-kernel error_logger '{file,"./jukebox-kernel.log"}' \
 	-sasl sasl_error_logger '{file,"./jukebox-sasl.log"}' \
 	+W w \
-	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR)
+	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR) -pa $(RFC4627_EBIN_DIR)
 
 all: $(TARGETS) $(IBROWSE_EBIN_DIR)
 	make -C priv/execdaemon
