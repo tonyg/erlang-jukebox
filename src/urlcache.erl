@@ -131,10 +131,10 @@ download_and_cache(CachePid, Filename, Url) ->
 				           {"metadata_error", list_to_binary(MetadataOutput)}])
 	        end;
         {ok, {{_, ResponseCode, _}, _, _}} ->
-            file:write_file(local_metadata_name_for(Url), []), %% So that wait_for_completion will find it
+            file:write_file(local_metadata_name_for(Url), io_lib:format("No file, HTTP code: ~p~n", [ResponseCode])), %% So that wait_for_completion will find it
 		    ok = jukebox:log_http_error(ResponseCode, Url);
         {error, Error} ->
-            file:write_file(local_metadata_name_for(Url), []),
+            file:write_file(local_metadata_name_for(Url), io_lib:format("No file, Error: ~p~n", [Error])),
 		    ok = jukebox:log_http_error(Error, Url)
         end
     end,
