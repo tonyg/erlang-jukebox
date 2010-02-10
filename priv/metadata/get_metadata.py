@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement 
-
 import os
 import sys
 import subprocess
@@ -144,7 +142,9 @@ def write_metadata():
         evaluate_gain(extension, music_file)
         gain = get_gain(extension, music_file)
         
-    with open(cache_name + ".metadata", "w") as metadata: 
+    metadata = open(cache_name + ".metadata.tmp", "w")
+
+    try:
         metadata.write("+ OK\n")
         metadata.write("totalTime\n")
         metadata.write("%d\n" % tags.info.length)
@@ -180,8 +180,16 @@ def write_metadata():
             add_tag(tags, metadata, "tracknumber", "trackNumber")
     
         metadata.write("cacheHash\n%s\n" % cache_hash)
+
+    except BaseException as e:
+        metadata.write(e)
+
+    finally:
         metadata.close()
-        
+
+    os.rename(cache_name + ".metadata.tmp", cache_name + ".metadata")
+
+
 cache_name = sys.argv[3]
 (cache_folder, cache_hash) = cache_name.rsplit("/", 1)
 
