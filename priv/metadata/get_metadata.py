@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
+
 import os
 import sys
 import subprocess
@@ -181,7 +183,7 @@ def write_metadata():
     
         metadata.write("cacheHash\n%s\n" % cache_hash)
 
-    except BaseException as e:
+    except BaseException, e:
         metadata.write(e)
 
     finally:
