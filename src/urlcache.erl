@@ -191,6 +191,12 @@ collect_current_downloads([_Other | Rest], Urls) ->
 
 init(_Args) ->
     inets:start(),
+    %% There's a race in Erlang's http client - see:
+    %% http://www.erlang.org/cgi-bin/ezmlm-cgi?2:msn:1445
+    %% Setting max_sessions to 1 reduces the likelihood of triggering the race.
+    %% You can still trigger it by enthusiastically enqueing tracks.
+    %% TODO: use another http lib, or wait for Erlang to fix this.
+    http:set_options([{max_sessions, 1}]),
     {ok, none}.
 
 handle_call(current_downloads, _From, State) ->
