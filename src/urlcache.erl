@@ -30,13 +30,17 @@ get_info(Url) ->
     case file:read_file(MetadataFilename) of
     {error,_} -> dict:new();
     {ok, File} ->
-        case catch parse_info(File) of
-        {'EXIT', _} ->
-            jukebox:log_error("urlcache",
-                      [{"url", list_to_binary(Url)},
-                       {"metadata_error", File}]),
-            dict:new();
-        Dict -> Dict
+        case binary_to_list(File) of
+        "No file" ++ _ -> dict:new(); %% We logged the error below when file failed to download, just ignore
+        _ ->
+            case catch parse_info(File) of
+            {'EXIT', _} ->
+                jukebox:log_error("urlcache",
+                          [{"url", list_to_binary(Url)},
+                           {"metadata_error", File}]),
+                dict:new();
+            Dict -> Dict
+            end
         end
     end.
 
