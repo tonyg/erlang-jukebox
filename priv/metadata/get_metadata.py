@@ -143,16 +143,16 @@ def write_metadata():
     extension = sys.argv[1].lower()
     music_file = sys.argv[2]
     
-    tags = get_tags(extension, music_file)
-    gain = get_gain(extension, music_file)
-    
-    if not gain:
-        evaluate_gain(extension, music_file)
-        gain = get_gain(extension, music_file)
-        
     metadata = open(cache_name + ".metadata.tmp", "w")
 
     try:
+        tags = get_tags(extension, music_file)
+        gain = get_gain(extension, music_file)
+        
+        if not gain:
+            evaluate_gain(extension, music_file)
+            gain = get_gain(extension, music_file)
+
         metadata.write("+ OK\n")
         metadata.write("totalTime\n")
         metadata.write("%d\n" % tags.info.length)
@@ -190,7 +190,9 @@ def write_metadata():
         metadata.write("cacheHash\n%s\n" % cache_hash)
 
     except BaseException, e:
-        metadata.write(str(e))
+        metadata.write("- Error\n")
+        import traceback
+        traceback.print_exc(file = metadata)
 
     finally:
         metadata.close()
@@ -204,10 +206,4 @@ if len(sys.argv)!=4:
 cache_name = sys.argv[3]
 (cache_folder, cache_hash) = cache_name.rsplit("/", 1)
 
-try:
-    write_metadata()
-except:
-    with open(cache_name + ".metadata", "w") as metadata:
-        metadata.write("- Error\n")
-        import traceback
-        traceback.print_exc(file = metadata)
+write_metadata()
