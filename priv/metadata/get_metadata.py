@@ -190,7 +190,7 @@ def write_metadata():
         metadata.write("cacheHash\n%s\n" % cache_hash)
 
     except BaseException, e:
-        metadata.write(e)
+        metadata.write(str(e))
 
     finally:
         metadata.close()
