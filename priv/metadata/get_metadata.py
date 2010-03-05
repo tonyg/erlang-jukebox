@@ -191,6 +191,9 @@ def write_metadata():
 
     os.rename(cache_name + ".metadata.tmp", cache_name + ".metadata")
 
+if len(sys.argv)!=4:
+	print "Usage: %s <extension of the file> <path to file> <cache file path>"%sys.argv[0]
+	sys.exit(1)
 
 cache_name = sys.argv[3]
 (cache_folder, cache_hash) = cache_name.rsplit("/", 1)
