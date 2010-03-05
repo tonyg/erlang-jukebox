@@ -5,12 +5,13 @@ from __future__ import with_statement
 import os
 import sys
 import subprocess
+import types
 
 from mutagen.apev2 import APEv2
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
-from mutagen.mp4 import MP4
+from mutagen.mp4 import MP4, MP4Cover
 from mutagen.mp3 import HeaderNotFoundError
 
 thumb_size = (96, 96)
@@ -121,8 +122,13 @@ def write_albumart(image_tag, metadata):
     image_file = os.path.join(cache_folder, cache_hash + ".orig")
     image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
 
-    with open(image_file, "w") as image: 
-        image.write(image_tag.data)
+    with open(image_file, "w") as image:
+        if type(image_tag) == types.ListType:
+            image_tag = image_tag[0]
+        if isinstance(image_tag, MP4Cover):
+            image.write(image_tag)
+        else:
+            image.write(image_tag.data)
 
     try:
         retcode = subprocess.call(["convert", "-resize", "96x96", image_file, image_file_scaled], stderr=open("/dev/null"))
