@@ -80,7 +80,10 @@ def get_gain(extension, music_file):
             gain = tags['replaygain_track_gain'][0]
 
     except:
-        pass # Lazily we assume that if anything went wrong it's because the tag was not there
+        if opts.debug:
+            raise
+        else:
+            pass # Lazily we assume that if anything went wrong it's because the tag was not there
 
     if gain:
         # We have e.g. -3.100000 dB. Remove the "dB" and convert to float
@@ -196,7 +199,7 @@ def write_metadata(extension, music_file):
     
         metadata.write("cacheHash\n%s\n" % cache_hash)
 
-    except BaseException, e:
+    except:
         if opts.debug:
             raise
         metadata.write("- Error\n")
