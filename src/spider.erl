@@ -129,7 +129,6 @@ avoid_extension(E) -> avoid_extension1(http_util:to_lower(E)).
 avoid_extension1(".rm") -> true;
 avoid_extension1(".ram") -> true;
 avoid_extension1(".wmv") -> true;
-avoid_extension1(".wma") -> true;
 avoid_extension1(".mov") -> true;
 avoid_extension1(".jpg") -> true;
 avoid_extension1(".m4p") -> true;

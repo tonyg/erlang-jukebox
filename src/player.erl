@@ -30,6 +30,7 @@ player_mapping1(".mp3") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".m4a") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".wav") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".flac") -> ?VLC_PLAYER_MAPPING;
+player_mapping1(".wma") -> ?VLC_PLAYER_MAPPING;
 player_mapping1(".m3u") -> playlist;
 player_mapping1(_) -> not_playable.
 

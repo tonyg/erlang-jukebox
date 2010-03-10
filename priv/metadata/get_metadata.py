@@ -14,6 +14,7 @@ from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp4 import MP4, MP4Cover
 from mutagen.mp3 import HeaderNotFoundError
+from mutagen.asf import ASF
 
 thumb_size = (96, 96)
 
@@ -49,6 +50,8 @@ def get_tags(extension, music_file):
             tags = MP4(music_file)
         elif extension == '.wav':
             tags = WAV(music_file)
+        elif extension == '.wma':
+            tags = ASF(music_file)
         return tags
     except HeaderNotFoundError, e:
         # Someone has uploaded a zero-length or badly corrupt file
@@ -178,6 +181,12 @@ def write_metadata(extension, music_file):
                 images = tags.tags.getall('APIC')
                 if len(images) > 0:
                     write_albumart(images[0], metadata)
+
+        elif extension == ".wma":
+            add_tag(tags, metadata, "Author", "artistName")
+            add_tag(tags, metadata, "WM/AlbumArtist", "albumTitle")
+            add_tag(tags, metadata, "Title","trackName")
+            add_tag(tags, metadata, "WM/TrackNumber","trackNumber")
     
         else:
             add_tag(tags, metadata, "artist", "artistName")
