@@ -52,6 +52,8 @@ def get_tags(extension, music_file):
             tags = WAV(music_file)
         elif extension == '.wma':
             tags = ASF(music_file)
+        else: # don't have anything better to give the user
+            tags = NullTags()
         return tags
     except HeaderNotFoundError, e:
         # Someone has uploaded a zero-length or badly corrupt file
