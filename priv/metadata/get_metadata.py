@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import types
+from optparse import OptionParser
 
 from mutagen.apev2 import APEv2
 from mutagen.mp3 import MP3
@@ -139,10 +140,7 @@ def write_albumart(image_tag, metadata):
         
     os.unlink(image_file)           
 
-def write_metadata():
-    extension = sys.argv[1].lower()
-    music_file = sys.argv[2]
-    
+def write_metadata(extension, music_file):
     metadata = open(cache_name + ".metadata.tmp", "w")
 
     try:
@@ -190,6 +188,8 @@ def write_metadata():
         metadata.write("cacheHash\n%s\n" % cache_hash)
 
     except BaseException, e:
+        if opts.debug:
+            raise
         metadata.write("- Error\n")
         import traceback
         traceback.print_exc(file = metadata)
@@ -199,11 +199,15 @@ def write_metadata():
 
     os.rename(cache_name + ".metadata.tmp", cache_name + ".metadata")
 
-if len(sys.argv)!=4:
-	print "Usage: %s <extension of the file> <path to file> <cache file path>"%sys.argv[0]
-	sys.exit(1)
+parser = OptionParser()
+parser.add_option("-d","--debug",help="Write errors out to command line rather than the file for debugging purposes",default=False,dest="debug",action="store_true")
+(opts,args) = parser.parse_args()
 
-cache_name = sys.argv[3]
+if len(args)!=3:
+    parser.error("Usage: %s <extension of the file> <path to file> <cache file path>"%sys.argv[0])
+
+cache_name = args[2]
 (cache_folder, cache_hash) = cache_name.rsplit("/", 1)
 
-write_metadata()
+write_metadata(args[0], args[1])
+# vim: tabstop=4 shiftwidth=4 et
