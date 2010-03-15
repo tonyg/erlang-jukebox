@@ -16,6 +16,13 @@ from mutagen.mp4 import MP4, MP4Cover
 from mutagen.mp3 import HeaderNotFoundError
 from mutagen.asf import ASF
 
+try:
+    from musicbrainz2.webservice import *
+    from urllib2 import urlopen
+    musicbrainz = True
+except ImportError:
+    musicbrainz = False
+
 thumb_size = (96, 96)
 
 class WAV:
@@ -82,10 +89,7 @@ def get_gain(extension, music_file):
             gain = tags['replaygain_track_gain'][0]
 
     except:
-        if opts.debug:
-            raise
-        else:
-            pass # Lazily we assume that if anything went wrong it's because the tag was not there
+        pass # Lazily we assume that if anything went wrong it's because the tag was not there
 
     if gain:
         # We have e.g. -3.100000 dB. Remove the "dB" and convert to float
@@ -123,10 +127,37 @@ def add_tag(tags, metadata, read_name, write_name):
 
         metadata.write("%s\n" % write_name)
         metadata.write("%s\n" % unicode(tag).encode("utf-8"))
+        if opts.debug:
+            print "'%s' '%s'"%(write_name,unicode(tag).encode("utf-8"))
+        tags[write_name] = tag
 
-def write_albumart(image_tag, metadata):
+def write_albumart(image_tag, metadata, tags):
     if not image_tag:
-        return
+        if not musicbrainz: # don't have the module to do the smart tagging
+            return
+        if 'albumTitle' in tags:
+            if 'artistName' in tags:
+                rf = ReleaseFilter(title=tags['albumTitle'],artistName=tags['artistName'])
+            else:
+                rf = ReleaseFilter(title=tags['albumTitle'])
+        elif 'artistName' in tags:
+            rf = ReleaseFilter(artistName=tags['artistName'])
+        else:
+            return
+        q = Query()
+        r = q.getReleases(rf)
+        if len(r) == 0:
+            print "no such release"
+            return
+        r = r[0].getRelease()
+        if r.getAsin() != None:
+            asin = r.getAsin()
+            AMAZON_IMAGE_PATH = '/images/P/%s.%s.%sZZZZZZZ.jpg'
+            url = "http://ec1.images-amazon.com"+ AMAZON_IMAGE_PATH % (asin, '01', 'L')
+            image_tag = urlopen(url).read()
+        else:
+            print "no asin"
+            return
 
     image_file = os.path.join(cache_folder, cache_hash + ".orig")
     image_file_scaled = os.path.join(cache_folder, cache_hash + ".jpeg")
@@ -134,7 +165,7 @@ def write_albumart(image_tag, metadata):
     with open(image_file, "w") as image:
         if type(image_tag) == types.ListType:
             image_tag = image_tag[0]
-        if isinstance(image_tag, MP4Cover):
+        if isinstance(image_tag, str):
             image.write(image_tag)
         else:
             image.write(image_tag.data)
@@ -174,7 +205,7 @@ def write_metadata(extension, music_file):
             add_tag(tags, metadata, "trkn", "trackNumber")
 
             if tags.tags:
-                write_albumart(tags.tags.get('covr'), metadata)
+                write_albumart(tags.tags.get('covr'), metadata, tags)
 
         elif extension == '.mp3':
             add_tag(tags, metadata, "TPE1", "artistName")
@@ -183,9 +214,7 @@ def write_metadata(extension, music_file):
             add_tag(tags, metadata, "TRCK", "trackNumber")
 
             if tags.tags:
-                images = tags.tags.getall('APIC')
-                if len(images) > 0:
-                    write_albumart(images[0], metadata)
+                write_albumart(tags.tags.getall('APIC'), metadata, tags)
 
         elif extension == ".wma":
             add_tag(tags, metadata, "Author", "artistName")
