@@ -1,5 +1,6 @@
 -module(player).
 -include("tqueue.hrl").
+-include("settings.hrl").
 -behaviour(gen_server).
 
 -export([start_link/0]).
@@ -89,6 +90,10 @@ cache(Url, IsPaused) ->
     urlcache:cache(Url, self(), CacheRef),
     receive
 	{urlcache, ok, CacheRef, LocalFileName} ->
+		{obj,Keys} = urlcache:info_to_json(urlcache:get_info(Url)),
+		Artist = binary_to_list(lastfm:get_field("artistName", Keys)),
+		Title = binary_to_list(lastfm:get_field("trackName", Keys)),
+		lastfm:scrobble(?LASTFM_USER, ?LASTFM_PASSWORD,[{artist,Artist},{track,Title}]),
 	    play(Template, LocalFileName, IsPaused)
     after 100 ->
 	    {caching, {Template, CacheRef}}

@@ -9,3 +9,4 @@
 ^.settings$
 ^.pydevproject$
 ^priv/metadata/mutagen/.*\.pyc$
+src/settings.hrl
