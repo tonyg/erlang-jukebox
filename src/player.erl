@@ -234,6 +234,10 @@ handle_info({urlcache, ok, ReceivedRef, LocalFileName},
 	    State = #state{status = {caching, {Template, CacheRef}},
 			   is_paused = IsPaused})
   when ReceivedRef =:= CacheRef ->
+	{obj,Keys} = urlcache:info_to_json(urlcache:get_info_from_local_name(LocalFileName)),
+	Artist = binary_to_list(lastfm:get_field("artistName", Keys)),
+	Title = binary_to_list(lastfm:get_field("trackName", Keys)),
+	lastfm:scrobble(?LASTFM_USER, ?LASTFM_PASSWORD,[{artist,Artist},{track,Title}]),
     {noreply, act_on(reset_play_time(State#state{status = play(Template,
 							       LocalFileName,
 							       IsPaused)}))};

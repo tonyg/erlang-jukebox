@@ -9,6 +9,7 @@
 -export([cache/1, cache/3, current_downloads/0]).
 -export([get_info/1, info_to_json/1, queue_info_json/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+-export([get_info_from_local_name/1]).
 
 start_link() ->
     gen_server:start_link({local, urlcache}, ?MODULE, [], []).
@@ -26,7 +27,12 @@ get_info(null) -> dict:new();
 get_info(_Entry=#entry{url=Url}) ->
     get_info(Url);
 get_info(Url) ->
-    MetadataFilename = local_metadata_name_for(Url),
+	get_info_from_metadata_name(local_metadata_name_for(Url), Url).
+
+get_info_from_local_name(Local_name) ->
+	get_info_from_metadata_name(metadata_name_for_local(Local_name), Local_name).
+
+get_info_from_metadata_name(MetadataFilename, DisplayUrl) ->
     case file:read_file(MetadataFilename) of
     {error,_} -> dict:new();
     {ok, File} ->
@@ -36,7 +42,7 @@ get_info(Url) ->
             case catch parse_info(File) of
             {'EXIT', _} ->
                 jukebox:log_error("urlcache",
-                          [{"url", list_to_binary(Url)},
+                          [{"url", list_to_binary(DisplayUrl)},
                            {"metadata_error", File}]),
                 dict:new();
             Dict -> Dict
@@ -91,6 +97,9 @@ local_name_for(Url) ->
 
 local_metadata_name_for(Url) ->
     local_name_prefix(Url) ++ ".metadata".
+
+metadata_name_for_local(Local) ->
+	string:substr(Local, 0, string:str(Local, ".cachedata")) ++ ".metadata".
 
 hexify([]) ->
     "";
