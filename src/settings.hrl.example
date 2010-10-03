@@ -2,5 +2,8 @@
 -define(LASTFM_SHARED_SECRET, "").
 -define(LASTFM_USER, "").
 -define(LASTFM_PASSWORD, "").
+
 -define(VLC_COMMAND, ["/usr/bin/vlc", "--intf", "dummy", "--audio-replay-gain-mode", "track", url, "vlc://quit"]).
+
 -define(PACTL_EXTRA_ARGS, "").
+-define(PACTL_SINK, "0").

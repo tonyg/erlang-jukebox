@@ -22,21 +22,27 @@ set(Who, NewVol) -> gen_server:call(volume, {set, Who, NewVol}).
 -define(MAX_VOL, 65535).
 
 pactl_get_volume() -> 
-	Get_vol = "pactl get-sink-volume 0 " ++ ?PACTL_EXTRA_ARGS,
-	io:format("~p~n", [Get_vol]), 
+	Get_vol = "pactl list " ++ ?PACTL_EXTRA_ARGS,
+	%io:format("~p~n", [Get_vol]), 
 	Out = string:strip(os:cmd(Get_vol)),
-	io:format("~p~n", [Out]),
-	case regexp:first_match(Out, "[0-9]+") of
-		{match, Start, Length} ->
-			VolStr = string:substr(Out, Start, Length),
-			round(list_to_integer(VolStr) * 100 / ?MAX_VOL);
+	case regexp:first_match(Out, "Sink #" ++ ?PACTL_SINK ++ "\n(\t[^\n]+\n)+") of
+		{match, SinkStart, SinkLength} ->
+			SinkStr = string:substr(Out, SinkStart, SinkLength),
+			case regexp:first_match(SinkStr, "Volume: 0:[0-9\t ]+") of
+				{match, Start, Length} ->
+					VolLen = string:len("Volume: 0:"),
+					VolStr = string:strip(string:substr(SinkStr, Start + VolLen, Length-VolLen)),
+					list_to_integer(VolStr);
+				nomatch ->
+					'Can\'t find sink ' ++ ?PACTL_SINK ++ ' in pactl output'
+			end;
 		nomatch ->
-			'Install pactl with \'get-sink-volume\' patch'
+			'Install pactl please'
 	end.
 
 pactl_set_volume(NewVol) ->
 	Set_vol = "pactl set-sink-volume 0 " ++ integer_to_list( round(NewVol * ?MAX_VOL / 100)) ++ ?PACTL_EXTRA_ARGS,
-	io:format("~p~n", [Set_vol]), 
+	%io:format("~p~n", [Set_vol]), 
 	os:cmd(Set_vol),
     pactl_get_volume().
 
