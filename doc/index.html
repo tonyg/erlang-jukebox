@@ -38,7 +38,13 @@
 	  the <code>*.beam</code> files into the Erlang Jukebox's
 	  <code>ebin</code> directory).
 	</p>
-      </li>
+	</li>
+	<li>
+	<p>
+		Copy src/settings.hrl.example to src/settings.hrl and edit
+		as appropriate for your local system.
+	</p>
+	</li>
       <li>
 	<p>
 	  Type <code>make</code>. If all goes well, try <code>make
@@ -165,8 +171,14 @@
       <dd>
 	This module uses the external program <code>hmix</code> to
 	query and adjust mixer settings.
-      </dd>
-    </dl>
+	</dd>
+
+	<dt>lastfm.erl, md5.erl</dt>
+	<dd>
+		A last.fm interface module (and md5 support module) for
+		sending played tracks to last.fm. Requires setting the
+		LASTFM_* keys in settings.hrl.
+    </dd>
 
     <h3>The Main User-Interface</h3>
 
