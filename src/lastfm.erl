@@ -42,23 +42,28 @@ doRequest(Keys, URL) ->
 	http:request(post, {URL ++ "?",[], "application/x-www-form-urlencoded",Request}, [], []).
 
 scrobble(Username, Password, Args) ->
-	Auth = md5:md5_hex(Username ++ md5:md5_hex(Password)),
-	case lastfm_call(auth.getMobileSession, [{username, Username}, {authToken, Auth}], [], ['session'], ['subscriber','key'], true) of
-		[{session, Keys}] ->
-			Key = get_field(key, Keys),
-			Timestamp = erlang:integer_to_list(getUnixTimestamp(erlang:now())),
-			Token = md5:md5_hex(?LASTFM_SHARED_SECRET ++ Timestamp),
-			case doRequest([{hs,"true"},{c, ?CLIENT_ID},{p,"1.2.1"},{v,?CLIENT_VERSION},{u, Username},{t,Timestamp},{a,Token},{api_key,?LASTFM_API_KEY},{sk,Key}],"http://post.audioscrobbler.com/") of
-				{ok, {{_, 200, _}, _, Body}} ->
-					io:format("~p~n", [Body]),
-					["OK", SessionID, NowPlaying, Submission] = string:tokens(Body,"\n"),
-					Length = 100, % FIXME: right number
-					case doRequest([{s,SessionID},{"a[0]",get_field(artist,Args)},{"i[0]",Timestamp},{"t[0]",get_field(track,Args)},{"o[0]","P"},{"l[0]",integer_to_list(Length)},{"r[0]",""},{"b[0]",""},{"n[0]",""},{"m[0]",""}],Submission) of
-						{ok, {{_, 200, _}, _, "OK\n"}} ->
-							{ok, "Submitted fine"}
+	case Username of
+		"" ->
+			{error, "Need to set username in settings.hrl"};
+		_ ->
+			Auth = md5:md5_hex(Username ++ md5:md5_hex(Password)),
+			case lastfm_call(auth.getMobileSession, [{username, Username}, {authToken, Auth}], [], ['session'], ['subscriber','key'], true) of
+				[{session, Keys}] ->
+					Key = get_field(key, Keys),
+					Timestamp = erlang:integer_to_list(getUnixTimestamp(erlang:now())),
+					Token = md5:md5_hex(?LASTFM_SHARED_SECRET ++ Timestamp),
+					case doRequest([{hs,"true"},{c, ?CLIENT_ID},{p,"1.2.1"},{v,?CLIENT_VERSION},{u, Username},{t,Timestamp},{a,Token},{api_key,?LASTFM_API_KEY},{sk,Key}],"http://post.audioscrobbler.com/") of
+						{ok, {{_, 200, _}, _, Body}} ->
+							io:format("~p~n", [Body]),
+							["OK", SessionID, NowPlaying, Submission] = string:tokens(Body,"\n"),
+							Length = 100, % FIXME: right number
+							case doRequest([{s,SessionID},{"a[0]",get_field(artist,Args)},{"i[0]",Timestamp},{"t[0]",get_field(track,Args)},{"o[0]","P"},{"l[0]",integer_to_list(Length)},{"r[0]",""},{"b[0]",""},{"n[0]",""},{"m[0]",""}],Submission) of
+								{ok, {{_, 200, _}, _, "OK\n"}} ->
+									{ok, "Submitted fine"}
+							end
+						end
 					end
-			end
-		end.
+			end.
 
 api_sig(Args) ->
 	SortedArgs = lists:keysort(1, Args),
