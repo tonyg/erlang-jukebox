@@ -99,7 +99,7 @@ local_metadata_name_for(Url) ->
     local_name_prefix(Url) ++ ".metadata".
 
 metadata_name_for_local(Local) ->
-	string:substr(Local, 0, string:str(Local, ".cachedata")) ++ ".metadata".
+	string:substr(Local, 1, string:str(Local, ".cachedata")) ++ "metadata".
 
 hexify([]) ->
     "";
