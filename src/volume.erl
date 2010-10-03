@@ -21,30 +21,34 @@ set(Who, NewVol) -> gen_server:call(volume, {set, Who, NewVol}).
 % PulseAudio standard max value
 -define(MAX_VOL, 65535).
 
-alsa_get_volume() -> 
+pactl_get_volume() -> 
 	Get_vol = "pactl get-sink-volume 0 " ++ ?PACTL_EXTRA_ARGS,
 	io:format("~p~n", [Get_vol]), 
 	Out = string:strip(os:cmd(Get_vol)),
-	io:format("~p~n", [Out]), 
-	{match, Start, Length} = regexp:first_match(Out, "[0-9]+"),
-	VolStr = string:substr(Out, Start, Length),
-	round(list_to_integer(VolStr) * 100 / ?MAX_VOL).
+	io:format("~p~n", [Out]),
+	case regexp:first_match(Out, "[0-9]+") of
+		{match, Start, Length} ->
+			VolStr = string:substr(Out, Start, Length),
+			round(list_to_integer(VolStr) * 100 / ?MAX_VOL);
+		nomatch ->
+			'Install pactl with \'get-sink-volume\' patch'
+	end.
 
-alsa_set_volume(NewVol) ->
+pactl_set_volume(NewVol) ->
 	Set_vol = "pactl set-sink-volume 0 " ++ integer_to_list( round(NewVol * ?MAX_VOL / 100)) ++ ?PACTL_EXTRA_ARGS,
 	io:format("~p~n", [Set_vol]), 
 	os:cmd(Set_vol),
-    alsa_get_volume().
+    pactl_get_volume().
 
 init(_Args) ->
     {ok, {unknown, "", up}}.
 
 handle_call(Request, From, {unknown, Who, Direction}) ->
-    handle_call(Request, From, {alsa_get_volume(), Who, Direction});
+    handle_call(Request, From, {pactl_get_volume(), Who, Direction});
 handle_call(get, _From, State) ->
     {reply, State, State};
 handle_call({set, Who, VolArg}, _From, {OldVol, _Who, _Direction}) ->
-    NewVol = alsa_set_volume(VolArg),
+    NewVol = pactl_set_volume(VolArg),
     Direction = 
         case VolArg > OldVol of
             true -> up;
