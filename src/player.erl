@@ -82,6 +82,23 @@ act_and_reply(State) ->
     State1 = act_on(State),
     {reply, summarise_state(State1), State1}.
 
+scrobble(Info) ->
+	{_,Keys} = urlcache:info_to_json(Info),
+	case catch lastfm:get_field("artistName", Keys) of
+		{badarg, _} ->
+			{error, "Dodgy artist data"};
+		[] ->
+			{error, "No artist data"};
+		Artist ->
+			case catch lastfm:get_field("trackName", Keys) of
+				{badarg, _} ->
+					{error, "Dodgy title data"};
+				[] ->
+					{error, "No title data"};
+				Title ->
+					lastfm:scrobble(?LASTFM_USER, ?LASTFM_PASSWORD,[{artist,binary_to_list(Artist)},{track,binary_to_list(Title)}])
+		end
+	end.
 
 cache(Url, IsPaused) ->
     Extension = filename:extension(Url),
@@ -90,10 +107,7 @@ cache(Url, IsPaused) ->
     urlcache:cache(Url, self(), CacheRef),
     receive
 	{urlcache, ok, CacheRef, LocalFileName} ->
-		{obj,Keys} = urlcache:info_to_json(urlcache:get_info(Url)),
-		Artist = binary_to_list(lastfm:get_field("artistName", Keys)),
-		Title = binary_to_list(lastfm:get_field("trackName", Keys)),
-		lastfm:scrobble(?LASTFM_USER, ?LASTFM_PASSWORD,[{artist,Artist},{track,Title}]),
+		scrobble(urlcache:get_info(Url)),
 	    play(Template, LocalFileName, IsPaused)
     after 100 ->
 	    {caching, {Template, CacheRef}}
@@ -234,10 +248,7 @@ handle_info({urlcache, ok, ReceivedRef, LocalFileName},
 	    State = #state{status = {caching, {Template, CacheRef}},
 			   is_paused = IsPaused})
   when ReceivedRef =:= CacheRef ->
-	{obj,Keys} = urlcache:info_to_json(urlcache:get_info_from_local_name(LocalFileName)),
-	Artist = binary_to_list(lastfm:get_field("artistName", Keys)),
-	Title = binary_to_list(lastfm:get_field("trackName", Keys)),
-	lastfm:scrobble(?LASTFM_USER, ?LASTFM_PASSWORD,[{artist,Artist},{track,Title}]),
+	scrobble(urlcache:get_info_from_local_name(LocalFileName)),
     {noreply, act_on(reset_play_time(State#state{status = play(Template,
 							       LocalFileName,
 							       IsPaused)}))};
