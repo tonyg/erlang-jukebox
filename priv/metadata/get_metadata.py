@@ -18,7 +18,7 @@ from mutagen.asf import ASF
 
 try:
     from musicbrainz2.webservice import *
-    from urllib2 import urlopen
+    from urllib2 import urlopen, HTTPError
     musicbrainz = True
 except ImportError:
     musicbrainz = False
@@ -154,7 +154,11 @@ def write_albumart(image_tag, metadata, tags):
             asin = r.getAsin()
             AMAZON_IMAGE_PATH = '/images/P/%s.%s.%sZZZZZZZ.jpg'
             url = "http://ec1.images-amazon.com"+ AMAZON_IMAGE_PATH % (asin, '01', 'L')
-            image_tag = urlopen(url).read()
+            try:
+                image_tag = urlopen(url).read()
+            except HTTPError,e:
+                print "HTTP failure",e
+                return
         else:
             print "no asin"
             return
