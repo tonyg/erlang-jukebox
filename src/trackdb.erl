@@ -65,11 +65,17 @@ randomizer(From, ApproxCount, Roots) ->
 rescanner(Url) ->
     update_root(Url, tqueue:from_list(spider:spider(Url), null)).
 
-init(_Args) ->
-    case file:read_file("ejukebox.db") of
+read_db() ->
+    case file:read_file("state/ejukebox.db") of
 	{ok, State} -> {ok, {[], upgrade_state(binary_to_term(State))}};
 	{error, enoent} -> {ok, {[], #v2{roots = dict:new()}}}
     end.
+
+init(_Args) ->
+	case file:make_dir("state") of
+		ok -> read_db();
+		{error, eexist} -> read_db()
+	end.
 
 handle_call(all_roots, _From, S={_, State}) ->
     {reply,

@@ -62,7 +62,7 @@ clean: cleanlog
 	make -C $(IBROWSE_SOURCE_DIR) clean
 
 cleanstate:
-	rm -f ejukebox.state
+	rm -Rf state
 
 cleanlog:
 	rm -f priv/server_root/logs/{access_log,error_log,security_log}
