@@ -1,5 +1,6 @@
 -module(trackdb).
 -behaviour(gen_server).
+-include("settings.hrl").
 
 -export([start_link/0]).
 
@@ -66,13 +67,13 @@ rescanner(Url) ->
     update_root(Url, tqueue:from_list(spider:spider(Url), null)).
 
 read_db() ->
-    case file:read_file("state/ejukebox.db") of
+	case file:read_file(filename:join(?STATE_FOLDER, "ejukebox.db")) of
 	{ok, State} -> {ok, {[], upgrade_state(binary_to_term(State))}};
 	{error, enoent} -> {ok, {[], #v2{roots = dict:new()}}}
     end.
 
 init(_Args) ->
-	case file:make_dir("state") of
+	case file:make_dir(?STATE_FOLDER) of
 		ok -> read_db();
 		{error, eexist} -> read_db()
 	end.
@@ -94,7 +95,7 @@ handle_call({rescan_root, Url}, _From, {Rescans, State}) ->
 
 handle_call({update_root, Url, Q}, _From, {Rescans, State}) ->
     NewState = State#v2{roots = dict:store(Url, {queue:len(Q), Q}, State#v2.roots)},
-    file:write_file("ejukebox.db", term_to_binary(NewState)),
+	file:write_file(filename:join(?STATE_FOLDER,"ejukebox.db"), term_to_binary(NewState)),
     {reply, ok, {lists:delete(Url, Rescans), NewState}};
 
 handle_call({search_tracks, Keys}, From, S={_, State}) ->

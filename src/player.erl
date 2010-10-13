@@ -181,14 +181,14 @@ make_idle(State) ->
 		current_entry = null}.
 
 save_state(#state{queue = Q}) ->
-    file:write_file("state/ejukebox.state", rfc4627:encode({obj, [{"queue", tqueue:to_json(Q)}]})).
+	file:write_file(filename:join(?STATE_FOLDER, "ejukebox.state"), rfc4627:encode({obj, [{"queue", tqueue:to_json(Q)}]})).
 
 clean_state() ->
     make_idle(reset_play_time(#state{is_paused = false,
 				     queue = queue:new()})).
 
 load_state() ->
-    State = case file:read_file("state/ejukebox.state") of
+	State = case file:read_file(filename:join(?STATE_FOLDER, "ejukebox.state")) of
 		{ok, PickledStateStr} ->
 		    {ok, PickledState, _Remainder} = rfc4627:decode(PickledStateStr),
 		    case rfc4627:get_field(PickledState, "queue") of

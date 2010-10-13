@@ -7,3 +7,5 @@
 
 -define(PACTL_EXTRA_ARGS, "").
 -define(PACTL_SINK, "0").
+
+-define(STATE_FOLDER, "state").
