@@ -3,7 +3,7 @@ EBIN_DIR=ebin
 INCLUDE_DIR=include
 
 SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
-INCLUDES=$(wildcard $(INCLUDE_DIR)/*.hrl)
+INCLUDES=$(wildcard $(INCLUDE_DIR)/*.hrl) $(wildcard $(SOURCE_DIR)/*.hrl)
 TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam,$(SOURCES))
 
 IBROWSE_DIR=priv/ibrowse-1.0
