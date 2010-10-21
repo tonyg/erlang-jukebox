@@ -57,7 +57,7 @@ scrobble(Username, Password, Args) ->
 							io:format("~p~n", [Body]),
 							["OK", SessionID, NowPlaying, Submission] = string:tokens(Body,"\n"),
 							Length = 100, % FIXME: right number
-							case doRequest([{s,SessionID},{"a[0]",get_field(artist,Args)},{"i[0]",Timestamp},{"t[0]",get_field(track,Args)},{"o[0]","P"},{"l[0]",integer_to_list(Length)},{"r[0]",""},{"b[0]",""},{"n[0]",""},{"m[0]",""}],Submission) of
+							case doRequest([{s,SessionID},{"a[0]",edoc_lib:escape_uri(get_field(artist,Args))},{"i[0]",Timestamp},{"t[0]",edoc_lib:escape_uri(get_field(track,Args))},{"o[0]","P"},{"l[0]",integer_to_list(Length)},{"r[0]",""},{"b[0]",""},{"n[0]",""},{"m[0]",""}],Submission) of
 								{ok, {{_, 200, _}, _, "OK\n"}} ->
 									{ok, "Submitted fine"}
 							end
