@@ -59,8 +59,12 @@ scrobble(Username, Password, Args) ->
 							Length = 100, % FIXME: right number
 							case doRequest([{s,SessionID},{"a[0]",edoc_lib:escape_uri(get_field(artist,Args))},{"i[0]",Timestamp},{"t[0]",edoc_lib:escape_uri(get_field(track,Args))},{"o[0]","P"},{"l[0]",integer_to_list(Length)},{"r[0]",""},{"b[0]",""},{"n[0]",""},{"m[0]",""}],Submission) of
 								{ok, {{_, 200, _}, _, "OK\n"}} ->
-									{ok, "Submitted fine"}
-							end
+									{ok, "Submitted fine"};
+								{error, Error} ->
+									{error, Error}
+							end;
+						{error, Error} ->
+							{error, Error}
 						end
 					end
 			end.
@@ -197,7 +201,6 @@ decode_element([T|Rest], Jump, Structure, Text) when is_record(T, xmlElement) ->
 		[] -> decode_element(Rest, Jump, Structure, Text);
 		_  -> [DT|decode_element(Rest, Jump, Structure, Text)]
 	end;
-decode_element(E, _, _, _) when is_record(E, xmlElement) -> {error, {bad_element, E#xmlElement.name}};
 decode_element([], _, _, _) -> [];
 decode_element(E, _, _, _) -> {error, {bad_element, E}}.
 
