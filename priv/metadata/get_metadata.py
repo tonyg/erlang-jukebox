@@ -147,7 +147,8 @@ def write_albumart(image_tag, metadata, tags):
         q = Query()
         r = q.getReleases(rf)
         if len(r) == 0:
-            print "no such release"
+            if opts.debug:
+                print "no such release"
             return
         r = r[0].getRelease()
         if r.getAsin() != None:
@@ -157,10 +158,12 @@ def write_albumart(image_tag, metadata, tags):
             try:
                 image_tag = urlopen(url).read()
             except HTTPError,e:
-                print "HTTP failure",e
+                if opts.debug:
+                    print "HTTP failure",e
                 return
         else:
-            print "no asin"
+            if opts.debug:
+                print "no asin"
             return
 
     image_file = os.path.join(cache_folder, cache_hash + ".orig")
