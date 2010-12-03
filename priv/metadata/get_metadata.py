@@ -248,12 +248,25 @@ def write_metadata(extension, music_file):
 
     os.rename(cache_name + ".metadata.tmp", cache_name + ".metadata")
 
-parser = OptionParser()
+class InformativeOptionParser(OptionParser):
+    def error(self, msg):
+        """error(msg : string)
+
+        Print a usage message incorporating 'msg' to stderr and exit.
+        If you override this in a subclass, it should not return -- it
+        should either exit or raise an exception.
+        """
+        from sys import stderr,exit
+        stderr.write("%s: error: %s\n\n" % (self.get_prog_name(), msg))
+        print >>stderr,self.format_help()
+        exit(2)
+
+parser = InformativeOptionParser(usage="%prog [options] <extension of the file> <path to file> <cache file path>")
 parser.add_option("-d","--debug",help="Write errors out to command line rather than the file for debugging purposes",default=False,dest="debug",action="store_true")
 (opts,args) = parser.parse_args()
 
 if len(args)!=3:
-    parser.error("Usage: %s <extension of the file> <path to file> <cache file path>"%sys.argv[0])
+    parser.error("Need at least 3 arguments!")
 
 cache_name = args[2]
 (cache_folder, cache_hash) = cache_name.rsplit("/", 1)
