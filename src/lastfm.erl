@@ -48,6 +48,8 @@ scrobble(Username, Password, Args) ->
 		_ ->
 			Auth = md5:md5_hex(Username ++ md5:md5_hex(Password)),
 			case lastfm_call(auth.getMobileSession, [{username, Username}, {authToken, Auth}], [], ['session'], ['subscriber','key'], true) of
+				{error, Error} ->
+					{error, Error};
 				[{session, Keys}] ->
 					Key = get_field(key, Keys),
 					Timestamp = erlang:integer_to_list(getUnixTimestamp(erlang:now())),
