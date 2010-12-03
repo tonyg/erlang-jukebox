@@ -3,7 +3,6 @@
 from __future__ import with_statement
 
 import os
-import sys
 import subprocess
 import types
 from optparse import OptionParser
@@ -62,7 +61,7 @@ def get_tags(extension, music_file):
         else: # don't have anything better to give the user
             tags = NullTags()
         return tags
-    except HeaderNotFoundError, e:
+    except HeaderNotFoundError:
         # Someone has uploaded a zero-length or badly corrupt file
         return NullTags()
 
@@ -113,7 +112,7 @@ def evaluate_gain(extension, music_file):
     if cmd:
         try:
             subprocess.call(cmd, stdout=open("/dev/null"), stderr=open("/dev/null"))
-        except OSError, e:
+        except OSError:
             pass # It's probably not installed. Just continue.
 
 def add_tag(tags, metadata, read_name, write_name):
