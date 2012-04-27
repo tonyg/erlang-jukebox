@@ -37,7 +37,7 @@ terminate(_Reason, _State) ->
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
-    State.
+    {ok, State}.
 
 handle_call({jsonrpc, <<"current_rescans">>, _RequestInfo, []}, _From, State) ->
     {reply, {result, lists_to_binaries(trackdb:current_rescans())}, State};

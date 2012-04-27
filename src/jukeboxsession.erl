@@ -84,7 +84,7 @@ terminate(_Reason, _State) ->
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
-    State.
+    {ok, State}.
 
 handle_call({jsonrpc, <<"get_caller_hostname">>, RequestInfo, []}, _From, State) ->
     Name = case rfc4627:get_field(RequestInfo, "remote_peername", undefined) of
