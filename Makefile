@@ -25,7 +25,6 @@ ERL_CMD=erl \
 	-pa $(EBIN_DIR) -pa $(IBROWSE_EBIN_DIR) -pa $(RFC4627_EBIN_DIR)
 
 all: $(TARGETS) $(IBROWSE_EBIN_DIR)
-	make -C priv/execdaemon
 	make -C $(IBROWSE_SOURCE_DIR)
 
 # You will need debian-multimedia / medibuntu for aacgain
@@ -58,7 +57,6 @@ restart_clean: stop cleanstate daemon
 
 clean: cleanlog
 	rm -f $(TARGETS)
-	make -C priv/execdaemon clean
 	make -C $(IBROWSE_SOURCE_DIR) clean
 
 cleanstate:
