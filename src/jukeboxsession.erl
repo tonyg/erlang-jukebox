@@ -12,7 +12,7 @@ start_link() ->
       (Pid,
        rfc4627_jsonrpc:service(<<"jukebox">>,
 			       <<"urn:uuid:e97721d2-6439-4981-8527-e1f82edd0023">>,
-			       <<"1.0.0">>,
+			       <<"2.0.0">>,
 			       [{<<"get_caller_hostname">>, []},
 				{<<"search">>, [{"keys", arr}]},
 				{<<"randomtracks">>, [{"approxcount", num}]},
@@ -29,9 +29,7 @@ start_link() ->
 				{<<"clear_queue">>, [{"who", str}]},
 				{<<"get_history">>, [{"entrycount", num}]},
 				{<<"chat">>, [{"who", str},
-					      {"message", str}]},
-				{<<"get_volume">>, []},
-				{<<"set_volume">>, [{"newvol", num}]}])),
+					      {"message", str}]}])),
     {ok, Pid}.
 
 default_name(IpAddr) ->
@@ -62,9 +60,6 @@ summary_to_json({StateSymbol, Q, Entry, IsPaused, ElapsedTime}) ->
 	   {"paused", IsPaused},
 	   {"elapsedTime", ElapsedTime},
 	   {"downloads", lists:map(fun erlang:list_to_binary/1, CurrentDownloads)}]}.
-
-volume_to_json({Volume, Who, Direction}) ->
-    {obj, [{"volume", Volume}, {"who", list_to_binary(Who)}, {"direction", Direction}]}.
 
 history_to_json(H) ->
     lists:map(fun ({Who, {What, Entry}, When}) ->
@@ -141,13 +136,7 @@ handle_call({jsonrpc, <<"chat">>, _RequestInfo, [Who, Message]}, _From, State) -
     log(binary_to_list(Who), says, [{message, Message},
                                     {track, tqueue:entry_to_json(Entry)},
                                     {info,  urlcache:info_to_json(urlcache:get_info(Entry))}]),
-    {reply, {result, true}, State};
-
-handle_call({jsonrpc, <<"get_volume">>, _RequestInfo, []}, _From, State) ->
-    {reply, {result, volume_to_json(volume:get())}, State};
-
-handle_call({jsonrpc, <<"set_volume">>, _RequestInfo, [Who, NewVol]}, _From, State) ->
-    {reply, {result, volume_to_json(volume:set(binary_to_list(Who), NewVol))}, State}.
+    {reply, {result, true}, State}.
 
 handle_cast(_Request, State) ->
     {noreply, State}.
