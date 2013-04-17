@@ -27,34 +27,36 @@ get_info(null) -> dict:new();
 get_info(_Entry=#entry{url=Url}) ->
     get_info(Url);
 get_info(Url) ->
-	get_info_from_metadata_name(local_metadata_name_for(Url), Url).
+    get_info_from_metadata_name(local_metadata_name_for(Url), Url).
 
 get_info_from_local_name(Local_name) ->
-	get_info_from_metadata_name(metadata_name_for_local(Local_name), Local_name).
+    get_info_from_metadata_name(metadata_name_for_local(Local_name), Local_name).
 
 get_info_from_metadata_name(MetadataFilename, DisplayUrl) ->
     case file:read_file(MetadataFilename) of
-    {error,_} -> dict:new();
-    {ok, File} ->
-        case binary_to_list(File) of
-        "No file" ++ _ -> dict:new(); %% We logged the error below when file failed to download, just ignore
-        _ ->
-            case catch parse_info(File) of
-            {'EXIT', _} ->
-                jukebox:log_error("urlcache",
-                          [{"url", list_to_binary(DisplayUrl)},
-                           {"metadata_error", File}]),
-                dict:new();
-            Dict -> Dict
+        {error,_} -> dict:new();
+        {ok, File} ->
+            case binary_to_list(File) of
+                "No file" ++ _ ->
+                    %% We logged the error below when file failed to download, just ignore
+                    dict:new();
+                _ ->
+                    case catch parse_info(File) of
+                        {'EXIT', _} ->
+                            jukebox:log_error("urlcache",
+                                              [{"url", list_to_binary(DisplayUrl)},
+                                               {"metadata_error", File}]),
+                            dict:new();
+                        Dict -> Dict
+                    end
             end
-        end
     end.
 
 parse_info(File) ->
     [StatusLine | Lines] = string:tokens(binary_to_list(File), "\r\n"),
     case StatusLine of
-    "+" ++ _ ->
-        dict:from_list(tupleise(Lines, []))
+        "+" ++ _ ->
+            dict:from_list(tupleise(Lines, []))
     end.
 
 tupleise([], List) -> List;
@@ -99,7 +101,7 @@ local_metadata_name_for(Url) ->
     local_name_prefix(Url) ++ ".metadata".
 
 metadata_name_for_local(Local) ->
-	string:substr(Local, 1, string:str(Local, ".cachedata")) ++ "metadata".
+    string:substr(Local, 1, string:str(Local, ".cachedata")) ++ "metadata".
 
 hexify([]) ->
     "";
@@ -129,27 +131,31 @@ download_and_cache(CachePid, Filename, Url) ->
 	    ok;
 	false ->
 	    PartFilename = Filename ++ ".part",
-        case http:request(get, {Url, []}, [], [{stream, PartFilename}]) of
-        {ok, saved_to_file} ->
-            ok = try_rename(PartFilename, Filename, 5, no_previous_error),
-	        CommandString =
+            case httpc:request(get, {Url, []}, [], [{stream, PartFilename}]) of
+                {ok, saved_to_file} ->
+                    ok = try_rename(PartFilename, Filename, 5, no_previous_error),
+                    CommandString =
 		        jukebox:priv_dir() ++ "/metadata/get_metadata.py " ++ 
 		        filename:extension(Url) ++ " " ++ Filename ++ " " ++ 
 		        local_name_prefix(Url),
-	        case os:cmd(CommandString) of
-		    "" -> ok;
-		    MetadataOutput ->
-		        jukebox:log_error("urlcache",
-				          [{"metadata_command", list_to_binary(CommandString)},
-				           {"metadata_error", list_to_binary(MetadataOutput)}])
-	        end;
-        {ok, {{_, ResponseCode, _}, _, _}} ->
-            file:write_file(local_metadata_name_for(Url), io_lib:format("No file, HTTP code: ~p~n", [ResponseCode])), %% So that wait_for_completion will find it
+                    case os:cmd(CommandString) of
+                        "" -> ok;
+                        MetadataOutput ->
+                            jukebox:log_error("urlcache",
+                                              [{"metadata_command", list_to_binary(CommandString)},
+                                               {"metadata_error", list_to_binary(MetadataOutput)}])
+                    end;
+                {ok, {{_, ResponseCode, _}, _, _}} ->
+                    file:write_file(local_metadata_name_for(Url),
+                                    io_lib:format("No file, HTTP code: ~p~n",
+                                                  [ResponseCode])),
+                    %% ^ So that wait_for_completion will find it
 		    ok = jukebox:log_http_error(ResponseCode, Url);
-        {error, Error} ->
-            file:write_file(local_metadata_name_for(Url), io_lib:format("No file, Error: ~p~n", [Error])),
+                {error, Error} ->
+                    file:write_file(local_metadata_name_for(Url),
+                                    io_lib:format("No file, Error: ~p~n", [Error])),
 		    ok = jukebox:log_http_error(Error, Url)
-        end
+            end
     end,
     gen_server:cast(CachePid, {download_done, Url}),
     ok.
