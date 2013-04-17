@@ -39,7 +39,7 @@ doRequest(Keys) ->
 doRequest(Keys, URL) ->
 	Request = buildRequest(Keys),
 	io:format("~p~n", [Request]),
-	http:request(post, {URL ++ "?",[], "application/x-www-form-urlencoded",Request}, [], []).
+	httpc:request(post, {URL ++ "?",[], "application/x-www-form-urlencoded",Request}, [], []).
 
 scrobble(Username, Password, Args) ->
 	case Username of

@@ -31,7 +31,7 @@ retrieve(Url, Timeout) ->
 spider([], Results, _WantDebug) ->
     Results;
 spider([Url | Work], Results, WantDebug) ->
-    {ok, RE} = regexp:parse("[hH][rR][eE][fF]=\"([^\"]*)\""),
+    {ok, RE} = re:compile("[hH][rR][eE][fF]=\"([^\"]*)\""),
     debug_out(WantDebug, "Spidering ~p~n", [Url]),
     case retrieve(Url) of
 	{ok, "3" ++ _CodeRest, Headers, _Body} ->
@@ -45,11 +45,11 @@ spider([Url | Work], Results, WantDebug) ->
 	    end;
 	{ok, "2" ++ _CodeRest, _Headers, Body} ->
 	    %%debug_out(WantDebug, "Body length ~p~n", [length(Body)]),
-	    {match, Matches} = regexp:matches(Body, RE),
+	    {match, Matches} = re:run(Body, RE, [global]),
 	    {NewWork, NewResults} =
-		lists:foldl(fun ({Start, Length}, State) ->
+		lists:foldl(fun ([_, {Start, Length}], State) ->
 				    process_result_url(Url,
-						       string:substr(Body, Start + 6, Length - 7),
+						       string:substr(Body, Start + 1, Length),
 						       State)
 			    end, {Work, Results}, Matches),
 	    spider(NewWork, NewResults, WantDebug);
@@ -59,11 +59,11 @@ spider([Url | Work], Results, WantDebug) ->
     end.
 
 html_decode(S0) ->
-    {ok, S1, _} = regexp:gsub(S0, "&lt;", "<"),
-    {ok, S2, _} = regexp:gsub(S1, "&gt;", ">"),
-    {ok, S3, _} = regexp:gsub(S2, "&quot;", "\""),
-    {ok, S4, _} = regexp:gsub(S3, "&amp;", "\\&"),
-    S4.
+    S1 = re:replace(S0, "&lt;", "<", [global]),
+    S2 = re:replace(S1, "&gt;", ">", [global]),
+    S3 = re:replace(S2, "&quot;", "\"", [global]),
+    S4 = re:replace(S3, "&amp;", "\\&", [global]),
+    binary_to_list(iolist_to_binary(S4)).
 
 %% Like url_encode, but leaves any "reserved characters" alone in
 %% the string as well.
@@ -117,8 +117,8 @@ resolve_relative(Base, Url) ->
 	"//" ++ Rest ->
 	    "http://" ++ Rest;
 	"/" ++ AbsPath ->
-	    {match, Start, Length} = regexp:match(Base, "http://[^/]+/"),
-	    Prefix = string:substr(Base, Start, Length),
+	    {match, [{Start, Length}]} = re:run(Base, "http://[^/]+/"),
+	    Prefix = string:substr(Base, Start + 1, Length),
 	    Prefix ++ AbsPath;
 	RelPath ->
 	    string:strip(Base, right, $/) ++ "/" ++ RelPath

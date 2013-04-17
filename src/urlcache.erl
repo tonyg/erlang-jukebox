@@ -215,7 +215,7 @@ init(_Args) ->
     %% Setting max_sessions to 1 reduces the likelihood of triggering the race.
     %% You can still trigger it by enthusiastically enqueing tracks.
     %% TODO: use another http lib, or wait for Erlang to fix this.
-    http:set_options([{max_sessions, 1}]),
+    httpc:set_options([{max_sessions, 1}]),
     {ok, none}.
 
 handle_call(current_downloads, _From, State) ->

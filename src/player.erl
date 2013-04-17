@@ -144,8 +144,7 @@ fetch_m3u(Url, Username) ->
     case spider:retrieve(Url) of
 	{ok, "2"++_CodeRest, _Headers, Body} ->
 	    Entries = lists:filter(fun(E) -> "#" /= string:left(E,1) end, string:tokens(Body, "\r\n")),
-	    {ok, Base, _Count} = regexp:sub(Url, "/[^/]*$", "/" %% " emacs balancer
-					   ),
+	    Base = re:replace(Url, "/[^/]*$", "/"),
 	    CurriedResolveRelative = fun(Relative) ->
 					     UrlEncRel = spider:url_encode_path(Relative),
 					     spider:resolve_relative(Base, UrlEncRel)

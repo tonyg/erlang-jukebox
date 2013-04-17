@@ -14,7 +14,9 @@ init([]) ->
     {ok, {{one_for_one, 10, 10},
 	  [{rfc4627_jsonrpc, {rfc4627_jsonrpc, start_link, []},
 	    transient, 5000, worker, [rfc4627_jsonrpc]},
-	   {httpd, {httpd, start_link, ["priv/server_root/conf/httpd.conf"]},
+	   {httpd, {inets, start, [httpd,
+                                   [{file, "priv/server_root/conf/httpd.conf"}],
+                                   stand_alone]},
 	    transient, infinity, supervisor, [httpd_instance_sup]},
 
 	   {urlcache, {urlcache, start_link, []}, permanent, 5000, worker, [urlcache]},
