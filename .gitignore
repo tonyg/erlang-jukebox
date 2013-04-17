@@ -1,0 +1,11 @@
+scratch/
+priv/execdaemon/execdaemon
+*.beam
+priv/server_root/logs/*_log
+priv/server_root/htdocs/cache
+state/ejukebox.db
+state/ejukebox.state
+priv/metadata/mutagen/*.pyc
+src/settings.hrl
+jukebox-kernel.log
+jukebox-sasl.log
